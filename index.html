@@ -81,6 +81,7 @@ textarea{resize:vertical;min-height:80px}
 .scan-result .err{color:var(--warn);font-weight:600}
 .btn-solid{background:var(--accent);color:#fff}
 .btn-solid:hover{background:var(--accent-2)}
+.dict-help{margin-top:8px;padding:10px 12px;border:1px solid #f0c48a;background:#fff8ee;border-radius:8px;font-size:14px;color:#5a3a10}
 .partial{margin-top:6px;padding:6px 10px;border-left:3px solid var(--accent-2);background:var(--soft);color:var(--muted);font-style:italic;font-size:14px}
 .photo-actions{display:flex;gap:8px;flex-wrap:wrap}
 .photo-btn{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;border-radius:7px;border:1px solid #c8d6ea;padding:10px 14px;cursor:pointer;margin:0}
@@ -319,6 +320,7 @@ textarea{resize:vertical;min-height:80px}
   </div>
   <textarea class="narr" id="narrative" name="narrative" placeholder="Describe the incident. Cover each item checked in section 08."></textarea>
   <div class="partial" id="partial" hidden></div>
+  <div class="dict-help" id="dictHelp" hidden></div>
   <div class="count" id="narrCount">0 words</div>
 </section>
 
@@ -885,26 +887,58 @@ async function handleID(file){
 ['idCam','idPic'].forEach(id=>$(id).addEventListener('change',e=>{e.stopPropagation();const f=e.target.files[0];e.target.value='';handleID(f);}));
 
 /* ---------- dictation ---------- */
+const IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const IS_STANDALONE=window.navigator.standalone===true||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);
 function webSpeechDict(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition; if(!SR)return null;
-  let rec=null,state='idle',stopping=false,err=null,hp=()=>{},hf=()=>{},hs=()=>{};
+  let rec=null,state='idle',stopping=false,err=null,fails=0,watch=null,hp=()=>{},hf=()=>{},hs=()=>{};
   const set=(st,reason)=>{state=st;hs(reason?{state:st,reason}:{state:st});};
-  const make=(res,rej)=>{
-    rec=new SR();rec.continuous=true;rec.interimResults=true;rec.lang=navigator.language||'en-US';
-    rec.onstart=()=>{if(state!=='listening'){set('listening');res&&res();}};
+  const MAP={'not-allowed':'mic_blocked','service-not-allowed':'service_off','audio-capture':'no_mic','network':'network','language-not-supported':'lang'};
+  const finish=r=>{clearTimeout(watch);hp({text:''});err=null;stopping=false;set('idle',r);};
+  const make=()=>{
+    rec=new SR();rec.continuous=!IS_IOS;rec.interimResults=true;rec.maxAlternatives=1;rec.lang=navigator.language||'en-US';
+    rec.onstart=()=>{clearTimeout(watch);fails=0;if(state!=='listening')set('listening');};
     rec.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal){const t=r[0].transcript.trim();if(t)hf({text:' '+t});}else interim+=r[0].transcript;}hp({text:interim});};
-    rec.onerror=e=>{if(e.error==='no-speech'||e.error==='aborted')return;err=(e.error==='not-allowed'||e.error==='service-not-allowed')?'not_granted':'upstream_error';if(state==='starting'&&rej)rej({code:err,message:e.error});};
+    rec.onerror=e=>{if(e.error==='no-speech'||e.error==='aborted')return;err=MAP[e.error]||'upstream_error';};
     rec.onend=()=>{
-      if(!stopping&&!err&&state==='listening'){try{make();rec.start();return;}catch(_){}} // keep listening after pauses
-      hp({text:''});const r=err||(stopping?'stopped':'viewer_stopped');err=null;stopping=false;set('idle',r);
+      if(!stopping&&!err&&state==='listening'&&fails<3){ // keep listening after pauses
+        try{rec.start();return;}catch(_){try{make();rec.start();return;}catch(__){fails++;}}
+      }
+      finish(err||(stopping?'stopped':(state==='starting'?'no_start':'viewer_stopped')));
     };
   };
   return {
-    start(){if(state!=='idle')return Promise.resolve();return new Promise((res,rej)=>{set('starting');make(res,rej);try{rec.start();}catch(x){set('idle','upstream_error');rej({code:'upstream_error',message:String(x)});}});},
-    stop(){if(!rec||state==='idle')return Promise.resolve();stopping=true;set('finishing');return new Promise(r=>{const end=rec.onend;rec.onend=ev=>{end(ev);r();};try{rec.stop();}catch(_){end();r();}});},
+    start(){
+      if(state!=='idle')return Promise.resolve();
+      set('starting');
+      try{make();rec.start();}catch(x){finish('upstream_error');return Promise.reject({code:'upstream_error',message:String(x&&x.message||x)});}
+      clearTimeout(watch);watch=setTimeout(()=>{if(state==='starting'){stopping=false;err='no_start';try{rec.abort();}catch(_){}setTimeout(()=>{if(state==='starting')finish('no_start');},400);}},6000);
+      return Promise.resolve();
+    },
+    stop(){if(!rec||state==='idle')return Promise.resolve();stopping=true;set('finishing');
+      return new Promise(r=>{const end=rec.onend;rec.onend=ev=>{end(ev);r();};try{rec.stop();}catch(_){end();r();}setTimeout(()=>{if(state!=='idle'){finish('stopped');r();}},2500);});},
     active:()=>state!=='idle',
     onPartial:f=>{hp=f;return()=>{hp=()=>{}}},onFinal:f=>{hf=f;return()=>{hf=()=>{}}},onState:f=>{hs=f;return()=>{hs=()=>{}}}
   };
+}
+function dictHelp(reason){
+  const box=$('dictHelp');if(!box)return;
+  const settingsSafari='Settings → Apps → Safari → Microphone (older iPhones: Settings → Safari → Microphone) → <b>Allow</b>, then reload this page';
+  const M={
+    mic_blocked: IS_IOS?`The microphone is blocked for this site. Go to ${settingsSafari}.`:'The microphone is blocked for this site. Click the lock/site icon in the address bar, allow the microphone, then reload.',
+    service_off: IS_IOS?'iPhone dictation is turned off. Go to <b>Settings → General → Keyboard</b> and turn on <b>Enable Dictation</b> (on some iPhones Siri must also be on), then try again.':'Speech recognition is turned off on this device.',
+    no_mic:'No microphone was found. Check that nothing else is using it, then try again.',
+    network:'Dictation needs an internet connection. Check your signal or Wi-Fi and try again.',
+    lang:'Dictation isn’t available for this device’s language setting.',
+    no_start: IS_IOS&&IS_STANDALONE?'iPhone doesn’t allow dictation from the home-screen icon. Open <b>laxpdfar.github.io/RFU</b> in <b>Safari</b> to use this button — or use the keyboard mic below.':
+              IS_IOS?`Dictation didn’t start. Check <b>Settings → General → Keyboard → Enable Dictation</b> and ${settingsSafari}. Or use the keyboard mic below.`:'Dictation didn’t start. Check that the browser may use the microphone, then try again.',
+    upstream_error:'Dictation stopped unexpectedly. Try again, or use the keyboard mic below.'
+  };
+  const msg=M[reason];if(!msg){box.hidden=true;return;}
+  box.innerHTML=`<div>${msg}</div><div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn-solid" id="kbMic">Use keyboard mic instead</button><button type="button" class="btn-ghost" id="dictHelpClose">Dismiss</button></div>`;
+  box.hidden=false;
+  $('kbMic').onclick=()=>{box.hidden=true;ta.focus();const n=ta.value.length;try{ta.setSelectionRange(n,n);}catch(_){}toast(IS_IOS?'Tap the 🎤 microphone key on the keyboard (bottom right) and start talking':'Use your keyboard’s microphone key to dictate');};
+  $('dictHelpClose').onclick=()=>box.hidden=true;
 }
 let dict=null, insAt=null;
 const ta=$('narrative'), micBtn=$('btnMic');
@@ -925,17 +959,18 @@ function insertText(txt){
   try{ if(window.claude&&claude.use)dict=await claude.use('dictation'); }catch(e){dict=null;}
   if(!dict||typeof dict.start!=='function'||typeof dict.onFinal!=='function')dict=webSpeechDict();
   if(!dict)return;
-  micBtn.hidden=false; $('micHint').textContent='Speak naturally; words are added where your cursor is.';
+  micBtn.hidden=false; $('micHint').textContent=IS_IOS?'Speak naturally. If it doesn’t start on iPhone, use the keyboard’s 🎤 key.':'Speak naturally; words are added where your cursor is.';
   dict.onPartial(({text})=>{$('partial').hidden=!text;$('partial').textContent=text;});
   dict.onFinal(({text})=>{if(text)insertText(text);});
   dict.onState(({state,reason})=>{
     micUI(state);
+    if(state!=='idle')$('dictHelp').hidden=true;
     if(state==='idle'){$('partial').hidden=true;
       if(reason==='unavailable'){micBtn.hidden=true;toast('Dictation isn’t available here — type or use your keyboard’s mic.');}
-      else if(reason==='not_granted')toast('Microphone access was not allowed.');
       else if(reason==='rate_limited')toast('Dictation is busy — try again in a moment.');
-      else if(reason==='upstream_error')toast('Dictation stopped because of a microphone or service error.');
       else if(reason==='time_limit')toast('Dictation stops after 60 minutes — tap to continue.');
+      else if(reason==='not_granted')dictHelp('mic_blocked');
+      else dictHelp(reason);
     }
   });
 })();
@@ -943,12 +978,12 @@ micBtn.addEventListener('click',()=>{
   if(!dict)return;
   if(dict.active()){dict.stop().catch(()=>{});return;}
   insAt=(document.activeElement===ta||ta.selectionStart!==ta.selectionEnd||ta.selectionStart>0)?ta.selectionEnd:ta.value.length;
+  $('dictHelp').hidden=true;
   dict.start().catch(e=>{
     const c=e&&e.code;
-    if(c==='not_granted')toast('Microphone access was not allowed — you can still type.');
-    else if(c==='unavailable'){micBtn.hidden=true;toast('Dictation isn’t available here.');}
+    if(c==='unavailable'){micBtn.hidden=true;toast('Dictation isn’t available here.');}
     else if(c==='dismissed'||c==='stopped'){}
-    else toast('Couldn’t start dictation'+(e&&e.message?': '+e.message:''));
+    else dictHelp(c==='not_granted'?'mic_blocked':(c||'upstream_error'));
   });
 });
 
