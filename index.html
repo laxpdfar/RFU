@@ -585,6 +585,15 @@ async function reportDocx(d){
   const doc=new DOMParser().parseFromString(dec(get('word/document.xml').data),'application/xml');
   const el=(name,attrs)=>{const e=doc.createElementNS(W_NS,'w:'+name);for(const k in (attrs||{}))e.setAttributeNS(W_NS,'w:'+k,attrs[k]);return e;};
   const kid=(e,name)=>{for(const c of e.children)if(c.namespaceURI===W_NS&&c.localName===name)return c;return null;};
+  const ORDER={
+    pPr:'pStyle keepNext keepLines pageBreakBefore framePr widowControl numPr suppressLineNumbers pBdr shd tabs suppressAutoHyphens kinsoku wordWrap overflowPunct topLinePunct autoSpaceDE autoSpaceDN bidi adjustRightInd snapToGrid spacing ind contextualSpacing mirrorIndents suppressOverlap jc textDirection textAlignment textboxTightWrap outlineLvl divId cnfStyle rPr sectPr pPrChange'.split(' '),
+    rPr:'rStyle rFonts b bCs i iCs caps smallCaps strike dstrike outline shadow emboss imprint noProof snapToGrid vanish webHidden color spacing w kern position sz szCs highlight u effect bdr shd fitText vertAlign rtl cs em lang eastAsianLayout specVanish oMath'.split(' ')};
+  const putInOrder=(parent,child)=>{ // replace any same-named child, insert at the schema position
+    const order=ORDER[parent.localName]||[];const k=order.indexOf(child.localName);
+    [...parent.children].filter(c=>c.localName===child.localName).forEach(c=>c.remove());
+    const after=[...parent.children].find(c=>order.indexOf(c.localName)>k);
+    parent.insertBefore(child,after||null);return child;
+  };
 
   // collect legacy form fields in document order
   const fields=[];let cur=null;
@@ -602,7 +611,7 @@ async function reportDocx(d){
     const model=f.res[0]||f.begin;const rPr=kid(model,'rPr');
     f.res.forEach(r=>r.remove());
     const r=el('r');const rp=rPr?rPr.cloneNode(true):el('rPr');
-    if(sz){[...rp.children].filter(c=>c.localName==='sz'||c.localName==='szCs').forEach(c=>c.remove());rp.appendChild(el('sz',{val:String(sz)}));rp.appendChild(el('szCs',{val:String(sz)}));}
+    if(sz){putInOrder(rp,el('sz',{val:String(sz)}));putInOrder(rp,el('szCs',{val:String(sz)}));}
     r.appendChild(rp);
     val.replace(/\r/g,'').split('\n').forEach((line,k)=>{if(k)r.appendChild(el('br'));const t=el('t');t.setAttribute('xml:space','preserve');t.textContent=line;r.appendChild(t);});
     f.end.parentNode.insertBefore(r,f.end);
@@ -639,7 +648,7 @@ async function reportDocx(d){
   if(d.cause&&fields[38]){ // the form has no typing field for the cause itself: add it inside that box
     let cell=fields[38].end;while(cell&&!(cell.namespaceURI===W_NS&&cell.localName==='tc'))cell=cell.parentNode;
     if(cell){const ps=cell.getElementsByTagNameNS(W_NS,'p');const last=ps[ps.length-1];const p=el('p');const pPr=last&&kid(last,'pPr');if(pPr)p.appendChild(pPr.cloneNode(true));
-      const r=el('r');const rp=el('rPr');rp.appendChild(el('sz',{val:'18'}));r.appendChild(rp);const t=el('t');t.setAttribute('xml:space','preserve');t.textContent=d.cause;r.appendChild(t);p.appendChild(r);cell.appendChild(p);}
+      const r=el('r');const rp=el('rPr');putInOrder(rp,el('sz',{val:'18'}));r.appendChild(rp);const t=el('t');t.setAttribute('xml:space','preserve');t.textContent=d.cause;r.appendChild(t);p.appendChild(r);cell.appendChild(p);}
   }
   setText(39,d.footwear);setText(40,d.clothing);
   setText(41,d.esc_no);setCheck(42,d.esc_dir==='UP');setCheck(43,d.esc_dir==='DOWN');
@@ -680,25 +689,25 @@ async function reportDocx(d){
   // keep the closing empty paragraph tiny so it can't spill onto a blank extra page
   { const body=doc.getElementsByTagNameNS(W_NS,'body')[0];const sect=kid(body,'sectPr');const last=sect&&sect.previousElementSibling;
     if(last&&last.localName==='p'&&!last.textContent.trim()){let pPr=kid(last,'pPr');if(!pPr){pPr=el('pPr');last.insertBefore(pPr,last.firstChild);}
-      [...pPr.children].filter(c=>c.localName==='spacing'||c.localName==='rPr').forEach(c=>c.remove());
-      pPr.appendChild(el('spacing',{before:'0',after:'0',line:'20',lineRule:'exact'}));const rp=el('rPr');rp.appendChild(el('sz',{val:'2'}));pPr.appendChild(rp);}
+      putInOrder(pPr,el('spacing',{before:'0',after:'0',line:'20',lineRule:'exact'}));const rp=el('rPr');rp.appendChild(el('sz',{val:'2'}));putInOrder(pPr,rp);}
   }
   // photos: added after the narrative, two per page
-  const pics=(d.photos||[]).filter(p=>p&&typeof p.src==='string'&&/^data:image\/jpe?g/.test(p.src));
+  const pics=(d.photos||[]).filter(p=>p&&typeof p.src==='string'&&/^data:image\/(jpe?g|png)[;,]/.test(p.src));
   if(pics.length){
     const body=doc.getElementsByTagNameNS(W_NS,'body')[0];const sect=kid(body,'sectPr');
     const relsF=get('word/_rels/document.xml.rels');let rels=dec(relsF.data);
     const ctF=get('[Content_Types].xml');let ct=dec(ctF.data);
-    if(!/Extension="jpe?g"/i.test(ct))ct=ct.replace('<Types ','<Types ').replace(/(<Types[^>]*>)/,'$1<Default Extension="jpeg" ContentType="image/jpeg"/>');
+    if(!/Extension="jpeg"/i.test(ct))ct=ct.replace(/(<Types[^>]*>)/,'$1<Default Extension="jpeg" ContentType="image/jpeg"/>');
+    if(!/Extension="png"/i.test(ct))ct=ct.replace(/(<Types[^>]*>)/,'$1<Default Extension="png" ContentType="image/png"/>');
     let xml='';const MAXW=6.5*914400,MAXH=4.1*914400;
     for(let i=0;i<pics.length;i++){
-      const p=pics[i],rid='rIdPhoto'+(i+1),fname='media/photo'+(i+1)+'.jpeg';
+      const p=pics[i],rid='rIdPhoto'+(i+1),ext=/^data:image\/png/.test(p.src)?'png':'jpeg',fname='media/photo'+(i+1)+'.'+ext;
       files.push({name:'word/'+fname,data:b64ToBytes(p.src.split(',')[1])});
       rels=rels.replace('</Relationships>',`<Relationship Id="${rid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="${fname}"/></Relationships>`);
       const [w,h]=await imgSize(p.src);let cx=MAXW,cy=Math.round(MAXW*h/w);if(cy>MAXH){cy=MAXH;cx=Math.round(MAXH*w/h);}
       if(i%2===0)xml+=`<w:p><w:pPr><w:pageBreakBefore/><w:spacing w:after="120"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/></w:rPr><w:t xml:space="preserve">PHOTOGRAPHS — PR NO. ${xmlEsc(d.pr_no||'')}${ofcName(d)?'   REPORTING OFFICER: '+xmlEsc(ofcName(d)):''}</w:t></w:r></w:p>`;
-      xml+=`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="120"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${9000+i}" name="Photo ${i+1}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="${9000+i}" name="photo${i+1}.jpeg"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
-      xml+=`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="240"/></w:pPr><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">PHOTO ${i+1}${p.taken?' · '+xmlEsc(p.taken):''}${p.caption?' — '+xmlEsc(p.caption):''}</w:t></w:r></w:p>`;
+      xml+=`<w:p><w:pPr><w:spacing w:before="120"/><w:jc w:val="center"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="${9000+i}" name="Photo ${i+1}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="${9000+i}" name="photo${i+1}.${ext}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
+      xml+=`<w:p><w:pPr><w:spacing w:after="240"/><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">PHOTO ${i+1}${p.taken?' · '+xmlEsc(p.taken):''}${p.caption?' — '+xmlEsc(p.caption):''}</w:t></w:r></w:p>`;
     }
     const frag=new DOMParser().parseFromString(`<root xmlns:w="${W_NS}" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${xml}</root>`,'application/xml');
     for(const n of [...frag.documentElement.childNodes])body.insertBefore(doc.importNode(n,true),sect);
