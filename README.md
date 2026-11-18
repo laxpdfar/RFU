@@ -12,8 +12,8 @@ A one-page web app for filling out the Airport Police Division **Injury Report (
 - **Photos**: take or attach photos, with captions; they're added to the end of the report
 - **Dictate the narrative** (Chrome, Edge and Safari)
 - Dropdowns for reporting officer (with serial number), supervisor and airline
-- **Download report** as a letter-size PDF laid out like the paper form
-- **Submit to supervisor**: downloads the PDF and opens a pre-filled Outlook email; on phones you can share the PDF straight to Outlook with it already attached
+- **Download report** as a Word file: the original APB Form 045 with every field filled in (photos are added on pages at the end)
+- **Submit to supervisor**: downloads the Word file and opens a pre-filled Outlook email; on phones you can share the Word file straight to Outlook with it already attached
 - Drafts save automatically in the browser; **Save form data** / **Open saved…** move a report between devices
 
 ### Using it
