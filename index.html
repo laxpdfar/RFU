@@ -197,9 +197,9 @@ textarea{resize:vertical;min-height:80px}
     <div class="f s4"><label class="l" for="date_occ">Date occurred</label><input type="date" id="date_occ" name="date_occ"></div>
     <div class="f s4"><label class="l" for="time_occ">Time occurred</label><input type="time" id="time_occ" name="time_occ"></div>
     <div class="f s4"><label class="l" for="dow">Day of week</label><input type="text" id="dow" name="dow" placeholder="auto"></div>
-    <div class="f s4"><label class="l" for="date_rep">Date reported</label><input type="date" id="date_rep" name="date_rep"></div>
-    <div class="f s4"><label class="l" for="time_rep">Time reported</label><input type="time" id="time_rep" name="time_rep"></div>
-    <div class="f s4" style="justify-content:flex-end"><button type="button" class="btn-ghost" id="btnNow">Reported = now</button></div>
+    <div class="f s6"><label class="l" for="date_rep">Date reported</label><input type="date" id="date_rep" name="date_rep"></div>
+    <div class="f s6"><label class="l" for="time_rep">Time reported</label><input type="time" id="time_rep" name="time_rep"></div>
+    
     <div class="f s6"><label class="l" for="loc_addr">Location of occurrence (address)</label><input type="text" id="loc_addr" name="loc_addr"></div>
     <div class="f s6"><label class="l" for="loc_area">Specific area of occurrence</label><input type="text" id="loc_area" name="loc_area"></div>
     <div class="f s12"><span class="l">Condition of premises</span>
@@ -471,11 +471,6 @@ function calcDow(){
 }
 $('v_dob').addEventListener('change',calcAge);
 $('date_occ').addEventListener('change',()=>{calcDow();calcAge();});
-$('btnNow').onclick=()=>{
-  const n=new Date(),p=x=>String(x).padStart(2,'0');
-  $('date_rep').value=`${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())}`;
-  $('time_rep').value=`${p(n.getHours())}:${p(n.getMinutes())}`; save();
-};
 
 let t;
 function save(){
