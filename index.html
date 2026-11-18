@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Injury Report – Fill-in App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f5; --card:#fff; --ink:#16202c; --muted:#5b6878; --line:#d5dbe3;
+  --accent:#1d3f6e; --accent-2:#2e5b9a; --soft:#e7eef8; --ok:#1f7a4d; --warn:#9a4a12;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 "IBM Plex Sans",system-ui,sans-serif}
+header.top{position:sticky;top:0;z-index:10;background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.top-inner{max-width:1080px;margin:0 auto;padding:10px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:700;letter-spacing:.04em;font-size:13px;text-transform:uppercase;line-height:1.2}
+.brand small{display:block;font-weight:500;opacity:.75;letter-spacing:.02em;text-transform:none;font-size:12px}
+.status{font-size:12px;opacity:.85;margin-left:auto}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-size:13px;font-weight:600;border-radius:7px;border:1px solid transparent;padding:7px 12px;cursor:pointer}
+.btn-light{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.3)}
+.btn-light:hover{background:rgba(255,255,255,.24)}
+.btn-primary{background:#fff;color:var(--accent)}
+.btn-primary:hover{background:var(--soft)}
+nav.steps{max-width:1080px;margin:0 auto;padding:0 18px 8px;display:flex;gap:6px;overflow-x:auto}
+nav.steps a{color:#fff;opacity:.8;text-decoration:none;font-size:12px;white-space:nowrap;padding:4px 9px;border-radius:20px;background:rgba(255,255,255,.08)}
+nav.steps a:hover{opacity:1;background:rgba(255,255,255,.2)}
+main{max-width:1080px;margin:0 auto;padding:18px}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px 20px;margin-bottom:16px;scroll-margin-top:110px}
+section.card h2{margin:0 0 14px;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:10px}
+section.card h2 .num{font-family:"IBM Plex Mono",monospace;background:var(--soft);color:var(--accent);border-radius:6px;padding:1px 7px;font-size:12px}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 8px}
+.grid{display:grid;gap:12px 14px;grid-template-columns:repeat(12,1fr)}
+.f{display:flex;flex-direction:column;gap:4px;grid-column:span 3;min-width:0}
+.s2{grid-column:span 2}.s4{grid-column:span 4}.s5{grid-column:span 5}.s6{grid-column:span 6}.s8{grid-column:span 8}.s12{grid-column:span 12}
+label.l{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+input[type=text],input[type=email],input[type=date],input[type=time],input[type=tel],input[type=number],select,textarea{
+  font:inherit;width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:#fbfcfd;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-2);outline-offset:-1px;background:#fff}
+input[readonly]{background:#f1f3f6;color:var(--muted)}
+textarea{resize:vertical;min-height:80px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:20px;padding:5px 11px;font-size:13px;cursor:pointer;background:#fbfcfd;user-select:none}
+.chip input{accent-color:var(--accent);margin:0}
+.chip:has(input:checked){background:var(--soft);border-color:var(--accent-2);color:var(--accent);font-weight:600}
+.premises{display:grid;grid-template-columns:150px 120px 1fr;gap:8px 12px;align-items:center}
+.premises .pl{font-weight:600;font-size:13px}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:0 6px 6px}
+.tbl td{padding:4px 6px;vertical-align:top}
+.tbl td.x{width:34px}
+.icon-btn{background:none;border:1px solid var(--line);color:var(--muted);width:30px;height:34px;border-radius:7px;padding:0}
+.icon-btn:hover{color:#a12;border-color:#d99}
+.btn-add{background:var(--soft);color:var(--accent);border-color:#c8d6ea;margin-top:8px}
+.btn-add:hover{background:#dbe6f5}
+.hint{font-size:12px;color:var(--muted)}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px}
+.narr{min-height:340px;font-size:15px;line-height:1.55}
+.dict-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.mic{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;font-size:14px;padding:9px 15px;border-radius:22px}
+.mic:hover{background:var(--accent-2)}
+.mic .dot{width:10px;height:10px;border-radius:50%;background:#fff;opacity:.85}
+.mic.on{background:#b42318}
+.mic.on .dot{animation:pulse 1s infinite}
+.mic.busy{opacity:.7}
+@keyframes pulse{50%{opacity:.25;transform:scale(.7)}}
+.scan-box{background:var(--soft);border:1px dashed #b9cbe4;border-radius:10px;padding:12px;margin-bottom:16px}
+.scan-result{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px}
+.scan-result table{width:100%;border-collapse:collapse;font-size:13.5px;margin:6px 0 10px}
+.scan-result td{padding:4px 6px;border-bottom:1px solid #eef1f5}
+.scan-result td:first-child{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;width:38%}
+.scan-result .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.scan-result .err{color:var(--warn);font-weight:600}
+.btn-solid{background:var(--accent);color:#fff}
+.btn-solid:hover{background:var(--accent-2)}
+.partial{margin-top:6px;padding:6px 10px;border-left:3px solid var(--accent-2);background:var(--soft);color:var(--muted);font-style:italic;font-size:14px}
+.photo-actions{display:flex;gap:8px;flex-wrap:wrap}
+.photo-btn{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;border-radius:7px;border:1px solid #c8d6ea;padding:10px 14px;cursor:pointer;margin:0}
+.photo-btn.btn-ghost{border-color:var(--line)}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:14px}
+.ph{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fbfcfd;display:flex;flex-direction:column}
+.ph img{width:100%;height:170px;object-fit:cover;display:block;background:#dde3ea}
+.ph .pb{padding:8px;display:flex;flex-direction:column;gap:6px}
+.ph .pr{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
+.ph .pr button{background:none;border:1px solid var(--line);color:#a12;padding:3px 8px;font-size:12px}
+.count{text-align:right;font-size:12px;color:var(--muted);margin-top:4px}
+.bottom-bar{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin:6px 0 40px}
+.bottom-bar .btn-primary{background:var(--accent);color:#fff}
+.bottom-bar .btn-primary:hover{background:var(--accent-2)}
+.btn-ghost{background:#fff;border-color:var(--line);color:var(--ink)}
+.btn-ghost:hover{background:var(--soft)}
+.btn-danger{background:#fff;border-color:#e3c2c2;color:#a12}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#16202c;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:50;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.modal-bg{position:fixed;inset:0;background:rgba(10,20,35,.45);display:none;align-items:center;justify-content:center;z-index:40;padding:16px}
+.modal-bg.show{display:flex}
+.modal{background:#fff;border-radius:12px;max-width:440px;width:100%;padding:20px}
+.modal h4{margin:0 0 8px;font-size:17px}
+.modal p{margin:0 0 16px;color:var(--muted)}
+.modal .row{display:flex;gap:8px;justify-content:flex-end}
+.steps-list{margin:0 0 4px;padding-left:20px;color:var(--ink)}
+.steps-list li{margin-bottom:10px}
+.outlook-btn{display:inline-block;background:#0f6cbd;color:#fff;text-decoration:none;font-weight:600;padding:9px 14px;border-radius:7px;margin-top:6px}
+.outlook-btn:hover{background:#115ea3}
+.addr{font-family:"IBM Plex Mono",monospace;font-size:13px;background:var(--soft);padding:2px 6px;border-radius:4px;word-break:break-all}
+.miss{border-color:#d9822b !important;background:#fff8f0 !important}
+@media (max-width:760px){
+  .f,.s2,.s4,.s5,.s6,.s8{grid-column:span 6}
+  .premises{grid-template-columns:1fr 1fr}
+  .premises .pl{grid-column:span 2;margin-top:6px}
+  .tbl thead{display:none}
+  .tbl tr{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;padding:6px}
+  .tbl td.x{width:auto}
+  .status{display:none}
+}
+@media (max-width:460px){ .f,.s2,.s4,.s5,.s6,.s8{grid-column:span 12} }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">Airport Police Division · Injury Report<small>APB Form 045 — fill-in version</small></div>
+    <div class="status" id="status">Not saved yet</div>
+    <div class="actions">
+      <button class="btn-light" id="btnLoad" type="button">Open saved…</button>
+      <button class="btn-primary" id="btnReport" type="button">Download report</button>
+    </div>
+  </div>
+  <nav class="steps">
+    <a href="#s-header">Case</a><a href="#s-victim">Victim</a><a href="#s-occ">Occurrence</a><a href="#s-cause">Cause &amp; premises</a>
+    <a href="#s-notify">Notification &amp; medical</a><a href="#s-travel">Travel</a><a href="#s-persons">Involved persons</a>
+    <a href="#s-info">Report contents</a><a href="#s-sign">Officers</a><a href="#s-narr">Narrative (p.2)</a><a href="#s-photos">Photos</a>
+  </nav>
+</header>
+
+<main>
+<form id="f" autocomplete="off" onsubmit="return false">
+
+<section class="card" id="s-header">
+  <h2><span class="num">01</span>Case</h2>
+  <div class="grid">
+    <div class="f s4"><label class="l" for="pr_no">PR No.</label><input type="text" id="pr_no" name="pr_no"></div>
+    <div class="f s4"><span class="l">CPI</span>
+      <div class="chips"><label class="chip"><input type="radio" name="cpi" value="YES">Yes</label><label class="chip"><input type="radio" name="cpi" value="NO">No</label></div></div>
+    <div class="f s4"><label class="l" for="classification">Classification</label>
+      <select id="classification" name="classification"><option value=""></option><option>DEATH</option><option>INJURY</option><option>SICK/ILLNESS</option><option>OTHER</option></select></div>
+    <div class="f s12" id="classOtherWrap" hidden><label class="l" for="classification_other">Other – describe</label><input type="text" id="classification_other" name="classification_other"></div>
+  </div>
+</section>
+
+<section class="card" id="s-victim">
+  <h2><span class="num">02</span>Victim</h2>
+  <div class="scan-box">
+    <div class="photo-actions">
+      <label class="btn-add photo-btn"><input type="file" id="idCam" accept="image/*" capture="environment" hidden>🪪 Scan ID barcode</label>
+      <label class="btn-ghost photo-btn"><input type="file" id="idPic" accept="image/*" hidden>Use a saved photo</label>
+    </div>
+    <p class="hint" style="margin:6px 0 0">Take a photo of the <b>back</b> of a US/Canadian driver's license or state ID. Fill the frame with the wide barcode, hold steady, and avoid glare. It's read on this device.</p>
+    <div id="scanResult" class="scan-result" hidden></div>
+  </div>
+  <div class="grid">
+    <div class="f s6"><label class="l" for="v_name">Name (Last, First, Middle)</label><input type="text" id="v_name" name="v_name"></div>
+    <div class="f s2"><label class="l" for="v_sex">Sex</label><select id="v_sex" name="v_sex"><option value=""></option><option>M</option><option>F</option><option>X</option></select></div>
+    <div class="f s2"><label class="l" for="v_desc">Desc</label><input type="text" id="v_desc" name="v_desc"></div>
+    <div class="f s2"><label class="l" for="v_hair">Hair</label><input type="text" id="v_hair" name="v_hair"></div>
+    <div class="f s2"><label class="l" for="v_eyes">Eyes</label><input type="text" id="v_eyes" name="v_eyes"></div>
+    <div class="f s2"><label class="l" for="v_height">Height</label><input type="text" id="v_height" name="v_height" placeholder="5'10&quot;"></div>
+    <div class="f s2"><label class="l" for="v_weight">Weight</label><input type="text" id="v_weight" name="v_weight" placeholder="lbs"></div>
+    <div class="f s4"><label class="l" for="v_dob">DOB</label><input type="date" id="v_dob" name="v_dob"></div>
+    <div class="f s2"><label class="l" for="v_age">Age</label><input type="text" id="v_age" name="v_age" placeholder="auto"></div>
+    <div class="f s12"><label class="l" for="v_address">Address (No., Street, Apt No.)</label><input type="text" id="v_address" name="v_address"></div>
+    <div class="f s4"><label class="l" for="v_city">City</label><input type="text" id="v_city" name="v_city"></div>
+    <div class="f s4"><label class="l" for="v_statecounty">State / County</label><input type="text" id="v_statecounty" name="v_statecounty"></div>
+    <div class="f s4"><label class="l" for="v_zip">ZIP code</label><input type="text" id="v_zip" name="v_zip" inputmode="numeric"></div>
+    <div class="f s4"><label class="l" for="v_phone">Phone</label><input type="tel" id="v_phone" name="v_phone"></div>
+    <div class="f s6"><label class="l" for="v_dl">Driver's license no.</label><input type="text" id="v_dl" name="v_dl"></div>
+    <div class="f s2"><label class="l" for="v_dl_state">State</label><input type="text" id="v_dl_state" name="v_dl_state" maxlength="3"></div>
+    <div class="f s4"><label class="l" for="v_idtype">Other ID type</label>
+      <select id="v_idtype" name="v_idtype"><option value=""></option><option>SSN</option><option>PASSPORT</option><option>OTHER ID (SPECIFY)</option></select></div>
+    <div class="f s8"><label class="l" for="v_idno">ID number / specify</label><input type="text" id="v_idno" name="v_idno"></div>
+  </div>
+</section>
+
+<section class="card" id="s-occ">
+  <h2><span class="num">03</span>Occurrence</h2>
+  <div class="grid">
+    <div class="f s4"><label class="l" for="date_occ">Date occurred</label><input type="date" id="date_occ" name="date_occ"></div>
+    <div class="f s4"><label class="l" for="time_occ">Time occurred</label><input type="time" id="time_occ" name="time_occ"></div>
+    <div class="f s4"><label class="l" for="dow">Day of week</label><input type="text" id="dow" name="dow" placeholder="auto"></div>
+    <div class="f s4"><label class="l" for="date_rep">Date reported</label><input type="date" id="date_rep" name="date_rep"></div>
+    <div class="f s4"><label class="l" for="time_rep">Time reported</label><input type="time" id="time_rep" name="time_rep"></div>
+    <div class="f s4" style="justify-content:flex-end"><button type="button" class="btn-ghost" id="btnNow">Reported = now</button></div>
+    <div class="f s6"><label class="l" for="loc_addr">Location of occurrence (address)</label><input type="text" id="loc_addr" name="loc_addr"></div>
+    <div class="f s6"><label class="l" for="loc_area">Specific area of occurrence</label><input type="text" id="loc_area" name="loc_area"></div>
+    <div class="f s12"><span class="l">Condition of premises</span>
+      <div class="chips">
+        <label class="chip"><input type="checkbox" name="cond" value="CLEAN">Clean</label>
+        <label class="chip"><input type="checkbox" name="cond" value="DRY">Dry</label>
+        <label class="chip"><input type="checkbox" name="cond" value="WELL LIT">Well lit</label>
+        <label class="chip"><input type="checkbox" name="cond" value="OTHER" id="condOther">Other</label>
+      </div></div>
+    <div class="f s12" id="condOtherWrap" hidden><label class="l" for="cond_other">Other condition – specify</label><input type="text" id="cond_other" name="cond_other"></div>
+  </div>
+</section>
+
+<section class="card" id="s-cause">
+  <h2><span class="num">04</span>Cause &amp; premises</h2>
+  <div class="grid">
+    <div class="f s8"><label class="l" for="cause">Primary cause of injury</label><input type="text" id="cause" name="cause"></div>
+    <div class="f s4"><span class="l">Determined by</span>
+      <div class="chips"><label class="chip"><input type="radio" name="cause_by" value="VICTIM">Victim</label><label class="chip"><input type="radio" name="cause_by" value="OFFICER">Officer</label></div></div>
+    <div class="f s6"><label class="l" for="footwear">Footwear type</label><input type="text" id="footwear" name="footwear"></div>
+    <div class="f s6"><label class="l" for="clothing">Clothing type</label><input type="text" id="clothing" name="clothing"></div>
+  </div>
+  <h3>Specify type of premises</h3>
+  <div class="premises">
+    <span class="pl">Escalator</span><input type="text" name="esc_no" placeholder="No.">
+    <div class="chips"><label class="chip"><input type="radio" name="esc_dir" value="UP">Up</label><label class="chip"><input type="radio" name="esc_dir" value="DOWN">Down</label></div>
+    <span class="pl">Door</span><input type="text" name="door_no" placeholder="No.">
+    <div class="chips"><label class="chip"><input type="radio" name="door_type" value="RETRACT">Retract</label><label class="chip"><input type="radio" name="door_type" value="REVOLVE">Revolve</label></div>
+    <span class="pl">Stairs</span><input type="text" name="stairs_no" placeholder="No.">
+    <div class="chips"><label class="chip"><input type="radio" name="stairs_type" value="CONCRETE">Concrete</label><label class="chip"><input type="radio" name="stairs_type" value="METAL">Metal</label></div>
+    <span class="pl">Moving sidewalk</span><input type="text" name="walk_no" placeholder="No."><span></span>
+    <span class="pl">Other (specify)</span><input type="text" name="prem_other" style="grid-column:span 2">
+  </div>
+</section>
+
+<section class="card" id="s-notify">
+  <h2><span class="num">05</span>Notification &amp; medical response</h2>
+  <div class="grid">
+    <div class="f s6"><label class="l" for="lax_by">LAX Police notified by</label><input type="text" id="lax_by" name="lax_by"></div>
+    <div class="f s6"><label class="l" for="lax_time">Time notified</label><input type="time" id="lax_time" name="lax_time"></div>
+    <div class="f s6"><label class="l" for="cup">CUP dispatcher</label><input type="text" id="cup" name="cup"></div>
+    <div class="f s6"><label class="l" for="cup_time">Time notified</label><input type="time" id="cup_time" name="cup_time"></div>
+  </div>
+  <h3>Medical response</h3>
+  <div class="grid">
+    <div class="f s4"><label class="l" for="med_type">Service called</label>
+      <select id="med_type" name="med_type"><option value=""></option><option>AMBULANCE</option><option>FIRE</option><option>PARAMEDICS</option><option>FIRST AID</option><option>OTHER</option></select></div>
+    <div class="f s4"><label class="l" for="med_called">Time called</label><input type="time" id="med_called" name="med_called"></div>
+    <div class="f s4"><label class="l" for="med_arrived">Time arrived</label><input type="time" id="med_arrived" name="med_arrived"></div>
+    <div class="f s4"><label class="l" for="med_by_type">By</label>
+      <select id="med_by_type" name="med_by_type"><option value=""></option><option>UNIT #</option><option>BADGE #</option><option>ID #</option></select></div>
+    <div class="f s8"><label class="l" for="med_by">Number / name</label><input type="text" id="med_by" name="med_by"></div>
+    <div class="f s6"><label class="l" for="trans_to">Transported to</label><input type="text" id="trans_to" name="trans_to"></div>
+    <div class="f s6"><label class="l" for="trans_by">Transported by</label>
+      <select id="trans_by" name="trans_by"><option value=""></option><option>AMBULANCE</option><option>FIRE</option><option>PARAMEDICS</option><option>FIRST AID</option><option>OTHER</option></select></div>
+  </div>
+</section>
+
+<section class="card" id="s-travel">
+  <h2><span class="num">06</span>Travel history</h2>
+  <h3 style="margin-top:0">Arriving passengers</h3>
+  <div class="grid">
+    <div class="f s5"><label class="l" for="arr_airline">Airline</label><select id="arr_airline" name="arr_airline" class="airline"><option value=""></option><option value="AER LINGUS">Aer Lingus</option><option value="AEROMEXICO">Aeromexico</option><option value="AIR CANADA">Air Canada</option><option value="AIR CHINA">Air China</option><option value="AIR FRANCE">Air France</option><option value="AIR NEW ZEALAND">Air New Zealand</option><option value="AIR PREMIA">Air Premia</option><option value="AIR TAHITI NUI">Air Tahiti Nui</option><option value="ALASKA">Alaska</option><option value="ALL NIPPON AIRWAYS">All Nippon Airways</option><option value="ALLEGIANT">Allegiant</option><option value="AMERICAN">American</option><option value="ASIANA">Asiana</option><option value="AUSTRIAN">Austrian</option><option value="AVIANCA">Avianca</option><option value="BREEZE AIRWAYS">Breeze Airways</option><option value="BRITISH AIRWAYS">British Airways</option><option value="CATHAY PACIFIC AIRWAYS">Cathay Pacific Airways</option><option value="CAYMAN AIRWAYS">Cayman Airways</option><option value="CHINA AIRLINES">China Airlines</option><option value="CHINA EASTERN">China Eastern</option><option value="CHINA SOUTHERN">China Southern</option><option value="CONDOR">Condor</option><option value="COPA">Copa</option><option value="DELTA">Delta</option><option value="EL AL">El Al</option><option value="EMIRATES AIRLINES">Emirates Airlines</option><option value="EVA AIR">EVA Air</option><option value="FIJI AIRWAYS">Fiji Airways</option><option value="FINNAIR">Finnair</option><option value="FLAIR AIRLINES">Flair Airlines</option><option value="FRENCH BEE">French Bee</option><option value="FRONTIER AIRLINES">Frontier Airlines</option><option value="HAWAIIAN">Hawaiian</option><option value="HORIZON">Horizon</option><option value="IBERIA">Iberia</option><option value="ITA AIRWAYS">ITA Airways</option><option value="JAPAN AIRLINES">Japan Airlines</option><option value="JETBLUE">JetBlue</option><option value="KLM">KLM</option><option value="KOREAN AIR">Korean Air</option><option value="LATAM AIRLINES">LATAM Airlines</option><option value="LEVEL">Level</option><option value="LOT POLISH">LOT Polish</option><option value="LUFTHANSA">Lufthansa</option><option value="NORSE ATLANTIC">Norse Atlantic</option><option value="PHILIPPINE AIRLINES">Philippine Airlines</option><option value="PORTER">Porter</option><option value="QANTAS">QANTAS</option><option value="QATAR AIRWAYS">Qatar Airways</option><option value="SAS">SAS</option><option value="SAUDIA">SAUDIA</option><option value="SICHUAN AIRLINES">Sichuan Airlines</option><option value="SINGAPORE">Singapore</option><option value="SOUTHERN AIRWAYS">Southern Airways</option><option value="SOUTHWEST">Southwest</option><option value="SPIRIT">Spirit</option><option value="STARLUX">STARLUX</option><option value="SUN COUNTRY">Sun Country</option><option value="SWISS">SWISS</option><option value="TAP AIR PORTUGAL">TAP Air Portugal</option><option value="TURKISH AIRLINES">Turkish Airlines</option><option value="UNITED/UNITED EXPRESS">United/United Express</option><option value="VIRGIN ATLANTIC">Virgin Atlantic</option><option value="VIVA AEROBUS">Viva Aerobus</option><option value="VOLARIS">Volaris</option><option value="WESTJET">WestJet</option><option value="XIAMEN AIRLINES">Xiamen Airlines</option><option value="ZIPAIR">ZIPAIR</option><option value="OTHER">Other (type name)…</option></select></div>
+    <div class="f s4"><label class="l" for="arr_flight">Flight no.</label><input type="text" id="arr_flight" name="arr_flight"></div>
+    <div class="f s3"><label class="l" for="arr_time">Time</label><input type="time" id="arr_time" name="arr_time"></div>
+    <div class="f s12" id="arrOtherWrap" hidden><label class="l" for="arr_other">Arriving airline name</label><input type="text" id="arr_other" name="arr_other"></div>
+  </div>
+  <h3>Departing passengers</h3>
+  <div class="grid">
+    <div class="f s5"><label class="l" for="dep_airline">Airline</label><select id="dep_airline" name="dep_airline" class="airline"><option value=""></option><option value="AER LINGUS">Aer Lingus</option><option value="AEROMEXICO">Aeromexico</option><option value="AIR CANADA">Air Canada</option><option value="AIR CHINA">Air China</option><option value="AIR FRANCE">Air France</option><option value="AIR NEW ZEALAND">Air New Zealand</option><option value="AIR PREMIA">Air Premia</option><option value="AIR TAHITI NUI">Air Tahiti Nui</option><option value="ALASKA">Alaska</option><option value="ALL NIPPON AIRWAYS">All Nippon Airways</option><option value="ALLEGIANT">Allegiant</option><option value="AMERICAN">American</option><option value="ASIANA">Asiana</option><option value="AUSTRIAN">Austrian</option><option value="AVIANCA">Avianca</option><option value="BREEZE AIRWAYS">Breeze Airways</option><option value="BRITISH AIRWAYS">British Airways</option><option value="CATHAY PACIFIC AIRWAYS">Cathay Pacific Airways</option><option value="CAYMAN AIRWAYS">Cayman Airways</option><option value="CHINA AIRLINES">China Airlines</option><option value="CHINA EASTERN">China Eastern</option><option value="CHINA SOUTHERN">China Southern</option><option value="CONDOR">Condor</option><option value="COPA">Copa</option><option value="DELTA">Delta</option><option value="EL AL">El Al</option><option value="EMIRATES AIRLINES">Emirates Airlines</option><option value="EVA AIR">EVA Air</option><option value="FIJI AIRWAYS">Fiji Airways</option><option value="FINNAIR">Finnair</option><option value="FLAIR AIRLINES">Flair Airlines</option><option value="FRENCH BEE">French Bee</option><option value="FRONTIER AIRLINES">Frontier Airlines</option><option value="HAWAIIAN">Hawaiian</option><option value="HORIZON">Horizon</option><option value="IBERIA">Iberia</option><option value="ITA AIRWAYS">ITA Airways</option><option value="JAPAN AIRLINES">Japan Airlines</option><option value="JETBLUE">JetBlue</option><option value="KLM">KLM</option><option value="KOREAN AIR">Korean Air</option><option value="LATAM AIRLINES">LATAM Airlines</option><option value="LEVEL">Level</option><option value="LOT POLISH">LOT Polish</option><option value="LUFTHANSA">Lufthansa</option><option value="NORSE ATLANTIC">Norse Atlantic</option><option value="PHILIPPINE AIRLINES">Philippine Airlines</option><option value="PORTER">Porter</option><option value="QANTAS">QANTAS</option><option value="QATAR AIRWAYS">Qatar Airways</option><option value="SAS">SAS</option><option value="SAUDIA">SAUDIA</option><option value="SICHUAN AIRLINES">Sichuan Airlines</option><option value="SINGAPORE">Singapore</option><option value="SOUTHERN AIRWAYS">Southern Airways</option><option value="SOUTHWEST">Southwest</option><option value="SPIRIT">Spirit</option><option value="STARLUX">STARLUX</option><option value="SUN COUNTRY">Sun Country</option><option value="SWISS">SWISS</option><option value="TAP AIR PORTUGAL">TAP Air Portugal</option><option value="TURKISH AIRLINES">Turkish Airlines</option><option value="UNITED/UNITED EXPRESS">United/United Express</option><option value="VIRGIN ATLANTIC">Virgin Atlantic</option><option value="VIVA AEROBUS">Viva Aerobus</option><option value="VOLARIS">Volaris</option><option value="WESTJET">WestJet</option><option value="XIAMEN AIRLINES">Xiamen Airlines</option><option value="ZIPAIR">ZIPAIR</option><option value="OTHER">Other (type name)…</option></select></div>
+    <div class="f s4"><label class="l" for="dep_flight">Flight no.</label><input type="text" id="dep_flight" name="dep_flight"></div>
+    <div class="f s3"><label class="l" for="dep_time">Time</label><input type="time" id="dep_time" name="dep_time"></div>
+    <div class="f s12" id="depOtherWrap" hidden><label class="l" for="dep_other">Departing airline name</label><input type="text" id="dep_other" name="dep_other"></div>
+  </div>
+  <h3>Other</h3>
+  <div class="grid">
+    <div class="f s6"><label class="l" for="other_company">Other history – airline / company name</label><input type="text" id="other_company" name="other_company"></div>
+    <div class="f s6"><label class="l" for="articles">Articles / packages carried (describe)</label><input type="text" id="articles" name="articles"></div>
+  </div>
+</section>
+
+<section class="card" id="s-persons">
+  <h2><span class="num">07</span>Involved persons</h2>
+  <p class="hint" style="margin:-6px 0 10px">Codes: W = Witness · PR = Person Reporting · PA = Person Assisting · P = Parent</p>
+  <table class="tbl">
+    <thead><tr><th style="width:90px">Code</th><th>Name</th><th style="width:150px">DOB</th><th>Address</th><th style="width:150px">Phone</th><th></th></tr></thead>
+    <tbody id="persons"></tbody>
+  </table>
+  <button type="button" class="btn-add" id="btnAddPerson">+ Add person</button>
+</section>
+
+<section class="card" id="s-info">
+  <h2><span class="num">08</span>Information included in report</h2>
+  <p class="hint" style="margin:-6px 0 10px">Check all that apply and include them in the narrative.</p>
+  <div class="checks" id="infoChecks"></div>
+</section>
+
+<section class="card" id="s-sign">
+  <h2><span class="num">09</span>Officers</h2>
+  <div class="grid">
+    <div class="f s6"><label class="l" for="ofc">Reporting officer</label><input type="text" id="ofc" name="ofc" placeholder="LAST, FIRST"></div>
+    <div class="f s3"><label class="l" for="ofc_detail">Detail</label><input type="text" id="ofc_detail" name="ofc_detail"></div>
+    <div class="f s3"><label class="l" for="ofc_serial">Serial no.</label><input type="text" id="ofc_serial" name="ofc_serial"></div>
+    <div class="f s6"><label class="l" for="sup">Supervisor</label><input type="text" id="sup" name="sup" placeholder="LAST, FIRST"></div>
+    <div class="f s3"><label class="l" for="sup_serial">Serial no.</label><input type="text" id="sup_serial" name="sup_serial"></div>
+    <div class="f s3"><label class="l" for="records">Records unit</label><input type="text" id="records" name="records"></div>
+  </div>
+</section>
+
+<section class="card" id="s-narr">
+  <h2><span class="num">10</span>Narrative <span class="hint" style="text-transform:none;letter-spacing:0">(page 2)</span></h2>
+  <div class="dict-bar">
+    <button type="button" class="mic" id="btnMic" hidden><span class="dot"></span><span id="micLabel">Dictate narrative</span></button>
+    <span class="hint" id="micHint">Tip: on a phone, tap the microphone key on your keyboard to dictate.</span>
+  </div>
+  <textarea class="narr" id="narrative" name="narrative" placeholder="Describe the incident. Cover each item checked in section 08."></textarea>
+  <div class="partial" id="partial" hidden></div>
+  <div class="count" id="narrCount">0 words</div>
+</section>
+
+<section class="card" id="s-photos">
+  <h2><span class="num">11</span>Photos <span class="hint" style="text-transform:none;letter-spacing:0">(added at the end of the report)</span></h2>
+  <div class="photo-actions">
+    <label class="btn-add photo-btn"><input type="file" id="camIn" accept="image/*" capture="environment" hidden>📷 Take photo</label>
+    <label class="btn-ghost photo-btn"><input type="file" id="picIn" accept="image/*" multiple hidden>Add from library / files</label>
+  </div>
+  <p class="hint" style="margin:8px 0 0">On a phone or tablet, "Take photo" opens the camera. On a computer it opens a file picker. Photos are resized for the report.</p>
+  <div class="photos" id="photos"></div>
+</section>
+
+<div class="bottom-bar">
+  <button type="button" class="btn-danger" id="btnClear">Start new report</button>
+  <button type="button" class="btn-primary" id="btnSubmit" style="background:#1f7a4d">Submit to supervisor ✉</button>
+  <button type="button" class="btn-ghost" id="btnCopy">Copy as text</button>
+  <button type="button" class="btn-ghost" id="btnSaveJson">Save form data (.json)</button>
+  <button type="button" class="btn-primary" id="btnReport2">Download report (PDF)</button>
+</div>
+</form>
+<input type="file" id="fileIn" accept=".json,application/json" hidden>
+</main>
+
+<div class="modal-bg" id="modal"><div class="modal">
+  <h4 id="mTitle"></h4><p id="mText"></p>
+  <div class="row"><button type="button" class="btn-ghost" id="mNo">Cancel</button><button type="button" class="btn-danger" id="mYes">Clear form</button></div>
+</div></div>
+<div class="modal-bg" id="subModal"><div class="modal" style="max-width:480px">
+  <h4>Send to supervisor</h4>
+  <div id="subBody"></div>
+  <div class="row" style="margin-top:14px"><button type="button" class="btn-ghost" id="subClose">Close</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+const KEY='apd-injury-report-draft-v1';
+const INFO=['VICTIM’S STATEMENTS','WITNESS STATEMENTS','MEDICATION/DRUGS TAKEN','EQUIPMENT DESCRIPTION','PHYSICAL EVIDENCE','UNDER DOCTOR’S CARE','VISION CORRECTION INVOLVED','OFCR’S OBS/INVESTIGATION','OTHER STATEMENTS','PHOTOS','DESCRIPTION OF INJURIES','MT GIVEN AT SCENE','OTHER AGENCIES INVOLVED'];
+const $=id=>document.getElementById(id);
+const form=$('f');
+
+$('infoChecks').innerHTML=INFO.map(t=>`<label class="chip"><input type="checkbox" name="info" value="${t}">${t}</label>`).join('');
+
+function personRow(p={}){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><select data-k="code"><option value=""></option><option>W</option><option>PR</option><option>PA</option><option>P</option></select></td>
+  <td><input type="text" data-k="name" placeholder="Name"></td>
+  <td><input type="date" data-k="dob"></td>
+  <td><input type="text" data-k="address" placeholder="Address"></td>
+  <td><input type="tel" data-k="phone" placeholder="Phone"></td>
+  <td class="x"><button type="button" class="icon-btn" title="Remove">✕</button></td>`;
+  tr.querySelectorAll('[data-k]').forEach(el=>el.value=p[el.dataset.k]||'');
+  tr.querySelector('.icon-btn').onclick=()=>{tr.remove();save();};
+  $('persons').appendChild(tr);
+}
+$('btnAddPerson').onclick=()=>{personRow();save();};
+
+function collect(){
+  const d={};
+  form.querySelectorAll('input[name],select[name],textarea[name]').forEach(el=>{
+    if(el.type==='checkbox'){(d[el.name]=d[el.name]||[]); if(el.checked)d[el.name].push(el.value);}
+    else if(el.type==='radio'){ if(!(el.name in d))d[el.name]=''; if(el.checked)d[el.name]=el.value;}
+    else d[el.name]=el.value;
+  });
+  d.persons=[...$('persons').children].map(tr=>{const o={};tr.querySelectorAll('[data-k]').forEach(el=>o[el.dataset.k]=el.value);return o;});
+  d.photos=photos.map(p=>({src:p.src,caption:p.caption,taken:p.taken}));
+  return d;
+}
+
+/* ---------- photos ---------- */
+let photos=[];
+const idb=(()=>{let p;return()=>p||(p=new Promise((res,rej)=>{try{const r=indexedDB.open('apd-injury-report',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}catch(e){rej(e);}}));})();
+async function idbSet(k,v){try{const db=await idb();await new Promise((res,rej)=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});return true;}catch(e){return false;}}
+async function idbGet(k){try{const db=await idb();return await new Promise((res,rej)=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}catch(e){return undefined;}}
+let photoSaveT;
+function savePhotos(){clearTimeout(photoSaveT);photoSaveT=setTimeout(async()=>{const ok=await idbSet('photos',photos.map(p=>({src:p.src,caption:p.caption,taken:p.taken})));if(!ok&&photos.length)$('status').textContent='Photos not autosaved here — use “Save form data”';},300);}
+
+function stamp(d){return d.toLocaleString('en-US',{month:'2-digit',day:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});}
+function resize(file){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file);const img=new Image();
+    img.onload=()=>{const MAX=1600;let w=img.naturalWidth,h=img.naturalHeight;const s=Math.min(1,MAX/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);
+      const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.82));};
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('bad image'));};img.src=url;});
+}
+async function addFiles(files){
+  let n=0;
+  for(const f of files){ if(!f.type.startsWith('image/'))continue;
+    try{const src=await resize(f);photos.push({src,caption:'',taken:stamp(new Date(f.lastModified||Date.now()))});n++;}catch(e){toast('Couldn’t read '+f.name);} }
+  if(n){const pc=form.querySelector('input[name=info][value=PHOTOS]');if(pc&&!pc.checked){pc.checked=true;save();}
+    renderPhotos();savePhotos();toast(n===1?'Photo added':n+' photos added');}
+}
+function renderPhotos(){
+  const box=$('photos');box.innerHTML='';
+  photos.forEach((p,i)=>{
+    const el=document.createElement('div');el.className='ph';
+    el.innerHTML=`<img alt="Photo ${i+1}"><div class="pb"><div class="pr"><span>Photo ${i+1} · ${p.taken||''}</span><button type="button">Remove</button></div><input type="text" placeholder="Caption (what this shows)"></div>`;
+    el.querySelector('img').src=p.src;
+    const cap=el.querySelector('input');cap.value=p.caption||'';
+    cap.addEventListener('input',e=>{e.stopPropagation();p.caption=cap.value;savePhotos();});
+    el.querySelector('button').onclick=()=>{photos.splice(i,1);renderPhotos();savePhotos();};
+    box.appendChild(el);
+  });
+}
+['camIn','picIn'].forEach(id=>$(id).addEventListener('change',e=>{e.stopPropagation();addFiles([...e.target.files]);e.target.value='';}));
+function apply(d){
+  form.querySelectorAll('input[name],select[name],textarea[name]').forEach(el=>{
+    const v=d[el.name];
+    if(el.type==='checkbox')el.checked=Array.isArray(v)&&v.includes(el.value);
+    else if(el.type==='radio')el.checked=v===el.value;
+    else el.value=v==null?'':v;
+  });
+  $('persons').innerHTML='';
+  const ps=(d.persons&&d.persons.length)?d.persons:[{},{},{}];
+  ps.forEach(personRow);
+  if(Array.isArray(d.photos)){photos=d.photos.filter(p=>p&&typeof p.src==='string'&&p.src.startsWith('data:image/'));renderPhotos();savePhotos();}
+  refresh();
+}
+
+function refresh(){
+  $('classOtherWrap').hidden=$('classification').value!=='OTHER';
+  $('condOtherWrap').hidden=!$('condOther').checked;
+  $('arrOtherWrap').hidden=$('arr_airline').value!=='OTHER';
+  $('depOtherWrap').hidden=$('dep_airline').value!=='OTHER';
+  const w=$('narrative').value.trim().split(/\s+/).filter(Boolean).length;
+  $('narrCount').textContent=w+(w===1?' word':' words');
+}
+function calcAge(){
+  const v=$('v_dob').value; if(!v)return;
+  const b=new Date(v+'T00:00'), ref=$('date_occ').value?new Date($('date_occ').value+'T00:00'):new Date();
+  let a=ref.getFullYear()-b.getFullYear(); const m=ref.getMonth()-b.getMonth();
+  if(m<0||(m===0&&ref.getDate()<b.getDate()))a--;
+  if(a>=0&&a<130)$('v_age').value=a;
+}
+function calcDow(){
+  const v=$('date_occ').value; if(!v)return;
+  $('dow').value=new Date(v+'T00:00').toLocaleDateString('en-US',{weekday:'long'}).toUpperCase();
+}
+$('v_dob').addEventListener('change',calcAge);
+$('date_occ').addEventListener('change',()=>{calcDow();calcAge();});
+$('btnNow').onclick=()=>{
+  const n=new Date(),p=x=>String(x).padStart(2,'0');
+  $('date_rep').value=`${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())}`;
+  $('time_rep').value=`${p(n.getHours())}:${p(n.getMinutes())}`; save();
+};
+
+let t;
+function save(){
+  refresh();
+  try{const d=collect();delete d.photos;localStorage.setItem(KEY,JSON.stringify(d));
+    $('status').textContent='Draft saved in this browser · '+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+  }catch(e){$('status').textContent='Autosave unavailable here — use “Save form data”';}
+}
+form.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(save,400);});
+form.addEventListener('change',save);
+
+function toast(m){const e=$('toast');e.textContent=m;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),2600);}
+
+/* ---------- output ---------- */
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fd=v=>{if(!v)return'';const [y,m,d]=v.split('-');return `${m}/${d}/${y}`;};
+const ft=v=>v?v.replace(':',''):'';
+const airName=(d,k)=>d[k+'_airline']==='OTHER'?(d[k+'_other']||''):(d[k+'_airline']||'');
+const ofcName=d=>d.ofc==='OTHER'?(d.ofc_other||''):(d.ofc||'');
+const supName=d=>d.sup==='OTHER'?(d.sup_other||''):(d.sup||'');
+const box=(on,label)=>`<span class="bx">${on?'☒':'☐'}</span> ${label}`;
+
+function reportHTML(d,narrChunks){
+  const nar=(narrChunks&&narrChunks.length)?narrChunks:[d.narrative||''];
+  const c=(lbl,val,span=1)=>`<td colspan="${span}"><div class="lb">${lbl}</div><div class="vl">${esc(val)||'&nbsp;'}</div></td>`;
+  const cr=(lbl,html,span=1)=>`<td colspan="${span}"><div class="lb">${lbl}</div><div class="vl">${html}</div></td>`;
+  const cond=d.cond||[], info=d.info||[];
+  const persons=(d.persons||[]).filter(p=>Object.values(p).some(Boolean));
+  while(persons.length<3)persons.push({});
+  const cls=d.classification?(d.classification+(d.classification==='OTHER'&&d.classification_other?': '+d.classification_other:'')):'';
+  const premises=[
+    `ESCALATOR NO. <u>${esc(d.esc_no)||'&nbsp;&nbsp;&nbsp;&nbsp;'}</u> ${box(d.esc_dir==='UP','UP')} ${box(d.esc_dir==='DOWN','DOWN')}`,
+    `DOOR NO. <u>${esc(d.door_no)||'&nbsp;&nbsp;&nbsp;&nbsp;'}</u> ${box(d.door_type==='RETRACT','RETRACT')} ${box(d.door_type==='REVOLVE','REVOLVE')}`,
+    `STAIRS NO. <u>${esc(d.stairs_no)||'&nbsp;&nbsp;&nbsp;&nbsp;'}</u> ${box(d.stairs_type==='CONCRETE','CONCRETE')} ${box(d.stairs_type==='METAL','METAL')}`,
+    `MOVING SIDEWALK NO. <u>${esc(d.walk_no)||'&nbsp;&nbsp;&nbsp;&nbsp;'}</u>`,
+    `OTHER (SPECIFY) <u>${esc(d.prem_other)||'&nbsp;&nbsp;&nbsp;&nbsp;'}</u>`].join('<br>');
+  const pics=(d.photos||[]).filter(p=>p&&typeof p.src==='string'&&p.src.startsWith('data:image/'));
+  const picPages=[];for(let i=0;i<pics.length;i+=2)picPages.push(pics.slice(i,i+2));
+  const total=1+nar.length+picPages.length;
+  const head=(pg)=>`<table><tr>
+      <td style="width:14%"><div class="vl"><b>PAGE ${pg} OF ${total}</b></div></td>
+      <td style="text-align:center"><div class="vl"><b>AIRPORT POLICE DIVISION<br>INJURY REPORT</b></div></td>
+      ${pg===1?cr('CPI',box(d.cpi==='YES','YES')+' &nbsp;'+box(d.cpi==='NO','NO')):c('REPORTING OFFICER',ofcName(d))}
+      ${c('PR NO.',d.pr_no)}</tr></table>`;
+  const foot=`<div class="foot"><span>APB FORM 045 (01-04) electronic</span><span>CITY OF LOS ANGELES – LOS ANGELES WORLD AIRPORTS – POLICE DIVISION</span></div>`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Injury Report ${esc(d.pr_no||'')}</title>
+<style>
+@page{size:letter;margin:0.45in}
+body{font:11px/1.25 Arial,Helvetica,sans-serif;color:#000;margin:0}
+.page{max-width:7.6in;margin:0 auto 24px}
+.page+.page{page-break-before:always}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+td{border:1px solid #000;padding:2px 4px;vertical-align:top}
+.lb{font-size:7.5px;font-weight:bold;text-transform:uppercase}
+.vl{min-height:14px;font-size:11px;word-wrap:break-word}
+.bx{font-size:12px}
+.sec{background:#e9e9e9;font-weight:bold;font-size:8px;text-transform:uppercase;padding:2px 4px;border:1px solid #000;border-top:0}
+.narr{border:1px solid #000;border-top:0;padding:8px;min-height:8.2in;white-space:pre-wrap;font-size:11.5px;line-height:1.6}
+.foot{display:flex;justify-content:space-between;font-size:7.5px;margin-top:3px}
+.phs{border:1px solid #000;border-top:0;padding:8px;min-height:8.2in;display:flex;flex-direction:column;gap:10px}
+.phf{flex:1;display:flex;flex-direction:column;align-items:center;border:1px solid #999;padding:6px;break-inside:avoid}
+.phf img{max-width:100%;max-height:3.6in;object-fit:contain}
+.phc{margin-top:5px;font-size:10px;width:100%}
+.victim{writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-weight:bold;font-size:9px;width:14px}
+.info{columns:3;font-size:9px;padding:4px}
+.info div{break-inside:avoid}
+@media screen{body{background:#888;padding:20px}.page{background:#fff;padding:.4in;box-shadow:0 2px 10px #0005}}
+</style></head><body>
+<div class="page">
+${head(1)}
+<table>
+<tr><td rowspan="4" style="width:18px;padding:0"><div class="victim">VICTIM</div></td>
+  ${c('CLASSIFICATION',cls,2)}${c('LAST, FIRST, MIDDLE',d.v_name,5)}${c('SEX',d.v_sex)}${c('DESC',d.v_desc)}${c('HAIR',d.v_hair)}${c('EYES',d.v_eyes)}</tr>
+<tr>${c(d.v_idtype||'SSN / PASSPORT / OTHER ID',d.v_idno,2)}${c('ADDRESS (NO. STREET, APT NO.)',d.v_address,5)}${c('HEIGHT',d.v_height)}${c('WEIGHT',d.v_weight)}${c('DOB',fd(d.v_dob))}${c('AGE',d.v_age)}</tr>
+<tr><td colspan="2" rowspan="2"></td>${c('CITY',d.v_city,3)}${c('PHONE',d.v_phone,2)}${c('DRIVERS LICENSE NO.',d.v_dl,3)}${c('STATE',d.v_dl_state)}</tr>
+<tr>${c('STATE/COUNTY',d.v_statecounty,3)}${c('ZIP CODE',d.v_zip,2)}<td colspan="4"></td></tr>
+</table>
+<table><tr>${c('DATE OCCURRED',fd(d.date_occ))}${c('TIME OCCURRED',ft(d.time_occ))}${c('DAY OF WEEK',d.dow)}${c('DATE REPORTED',fd(d.date_rep))}${c('TIME REPORTED',ft(d.time_rep))}</tr></table>
+<table><tr>${c('LOCATION OF OCCURRENCE (ADDRESS)',d.loc_addr,3)}${c('SPECIFIC AREA OF OCCURRENCE',d.loc_area,3)}
+${cr('CONDITION OF PREMISES',['CLEAN','DRY','WELL LIT'].map(x=>box(cond.includes(x),x)).join(' ')+' '+box(cond.includes('OTHER'),'OTHER')+(d.cond_other?': '+esc(d.cond_other):''),3)}</tr></table>
+<table>
+<tr>${cr('PRIMARY CAUSE OF INJURY DETERMINED BY '+box(d.cause_by==='VICTIM','VICTIM')+' '+box(d.cause_by==='OFFICER','OFFICER'),esc(d.cause)||'&nbsp;',3)}${c('FOOTWEAR TYPE',d.footwear,2)}${c('CLOTHING TYPE',d.clothing,2)}
+  <td rowspan="4" colspan="3"><div class="lb">SPECIFY TYPE OF PREMISES</div><div class="vl" style="line-height:1.9;font-size:9.5px">${premises}</div></td></tr>
+<tr>${c('LAX POLICE NOTIFIED BY:',d.lax_by,2)}${c('TIME NOTIFIED',ft(d.lax_time))}${c('CUP DISPATCHER',d.cup,3)}${c('TIME NOTIFIED',ft(d.cup_time))}</tr>
+<tr>${c((d.med_type||'MEDICAL')+' — TIME CALLED',ft(d.med_called),2)}${c('BY'+(d.med_by_type?' ('+d.med_by_type+')':''),d.med_by,3)}${c('TIME ARRIVED',ft(d.med_arrived),2)}</tr>
+<tr>${c('TRANSPORTED TO:',d.trans_to,4)}${c('TRANSPORTED BY:',d.trans_by,3)}</tr>
+</table>
+<div class="sec" style="border-top:1px solid #000;border-top:0">TRAVEL HISTORY</div>
+<table><tr>${c('ARRIVING — AIRLINE',airName(d,'arr'),2)}${c('FLIGHT NO.',d.arr_flight)}${c('TIME',ft(d.arr_time))}${c('DEPARTING — AIRLINE',airName(d,'dep'),2)}${c('FLIGHT NO.',d.dep_flight)}${c('TIME',ft(d.dep_time))}</tr>
+<tr>${c('OTHER — AIRLINE/COMPANY NAME',d.other_company,4)}${c('ARTICLES/PACKAGES CARRIED (DESCRIBE)',d.articles,4)}</tr></table>
+<div class="sec">INVOLVED PERSONS: (CODES W = WITNESS, PR = PERSON REPORTING, PA = PERSON ASSISTING, P = PARENT)</div>
+<table><tr><td style="width:7%"><div class="lb">CODE</div></td><td style="width:25%"><div class="lb">NAME</div></td><td style="width:12%"><div class="lb">DOB</div></td><td><div class="lb">ADDRESS</div></td><td style="width:16%"><div class="lb">PHONE NO.</div></td></tr>
+${persons.map(p=>`<tr><td><div class="vl">${esc(p.code)}</div></td><td><div class="vl">${esc(p.name)}</div></td><td><div class="vl">${fd(p.dob)}</div></td><td><div class="vl">${esc(p.address)}</div></td><td><div class="vl">${esc(p.phone)}</div></td></tr>`).join('')}
+</table>
+<div class="sec">INFORMATION INCLUDED IN REPORT (CHECK BOXES THAT APPLY AND INCLUDE IN NARRATIVE)</div>
+<div style="border:1px solid #000;border-top:0" class="info">${INFO.map(x=>`<div>${box(info.includes(x),x)}</div>`).join('')}</div>
+<table style="margin-top:-1px"><tr>${c('REPORTING OFFICER',ofcName(d),3)}${c('DETAIL',d.ofc_detail)}${c('SERIAL NO.',d.ofc_serial)}${c('SUPERVISOR',supName(d),3)}${c('SERIAL NO.',d.sup_serial)}${c('RECORDS UNIT',d.records)}</tr></table>
+${foot}
+</div>
+<div class="page">
+${nar.map((t,ni)=>`${ni?'<div class="page">':''}
+${head(2+ni)}
+<div class="sec">NARRATIVE${ni?' (CONTINUED)':''}</div>
+<div class="narr">${esc(t)}</div>
+${foot}
+</div>`).join('\n')}
+${picPages.map((pp,pi)=>`<div class="page">
+${head(2+nar.length+pi)}
+<div class="sec">PHOTOGRAPHS</div>
+<div class="phs">${pp.map((p,j)=>`<div class="phf"><img src="${p.src}" alt=""><div class="phc"><b>PHOTO ${pi*2+j+1}</b>${p.taken?' · '+esc(p.taken):''}${p.caption?' — '+esc(p.caption):''}</div></div>`).join('')}</div>
+${foot}
+</div>`).join('')}
+</body></html>`;
+}
+
+function reportText(d){
+  const L=[];const add=(k,v)=>{if(v&&(!Array.isArray(v)||v.length))L.push(`${k}: ${Array.isArray(v)?v.join(', '):v}`);};
+  L.push('AIRPORT POLICE DIVISION — INJURY REPORT','');
+  add('PR No.',d.pr_no);add('CPI',d.cpi);add('Classification',d.classification+(d.classification_other?': '+d.classification_other:''));
+  L.push('','VICTIM');add('Name',d.v_name);add('Sex',d.v_sex);add('Desc',d.v_desc);add('Hair',d.v_hair);add('Eyes',d.v_eyes);add('Height',d.v_height);add('Weight',d.v_weight);add('DOB',fd(d.v_dob));add('Age',d.v_age);
+  add('Address',d.v_address);add('City',d.v_city);add('State/County',d.v_statecounty);add('ZIP',d.v_zip);add('Phone',d.v_phone);add('DL No.',[d.v_dl,d.v_dl_state].filter(Boolean).join(' '));add(d.v_idtype||'Other ID',d.v_idno);
+  L.push('','OCCURRENCE');add('Date occurred',fd(d.date_occ));add('Time occurred',ft(d.time_occ));add('Day of week',d.dow);add('Date reported',fd(d.date_rep));add('Time reported',ft(d.time_rep));
+  add('Location',d.loc_addr);add('Specific area',d.loc_area);add('Condition of premises',(d.cond||[]).concat(d.cond_other?[d.cond_other]:[]));
+  L.push('','CAUSE & PREMISES');add('Primary cause',d.cause);add('Determined by',d.cause_by);add('Footwear',d.footwear);add('Clothing',d.clothing);
+  add('Escalator',[d.esc_no,d.esc_dir].filter(Boolean).join(' '));add('Door',[d.door_no,d.door_type].filter(Boolean).join(' '));add('Stairs',[d.stairs_no,d.stairs_type].filter(Boolean).join(' '));add('Moving sidewalk',d.walk_no);add('Other premises',d.prem_other);
+  L.push('','NOTIFICATION & MEDICAL');add('LAX Police notified by',d.lax_by);add('Time notified',ft(d.lax_time));add('CUP dispatcher',d.cup);add('CUP time notified',ft(d.cup_time));
+  add('Service',d.med_type);add('Time called',ft(d.med_called));add('By',[d.med_by_type,d.med_by].filter(Boolean).join(' '));add('Time arrived',ft(d.med_arrived));add('Transported to',d.trans_to);add('Transported by',d.trans_by);
+  L.push('','TRAVEL HISTORY');add('Arriving',[airName(d,'arr'),d.arr_flight,ft(d.arr_time)].filter(Boolean).join(' / '));add('Departing',[airName(d,'dep'),d.dep_flight,ft(d.dep_time)].filter(Boolean).join(' / '));add('Other airline/company',d.other_company);add('Articles carried',d.articles);
+  const ps=(d.persons||[]).filter(p=>Object.values(p).some(Boolean));
+  if(ps.length){L.push('','INVOLVED PERSONS');ps.forEach(p=>L.push(`${p.code||'-'} | ${p.name||''} | ${fd(p.dob)} | ${p.address||''} | ${p.phone||''}`));}
+  L.push('');add('Information included',d.info);
+  L.push('','OFFICERS');add('Reporting officer',[ofcName(d),d.ofc_detail&&'Detail '+d.ofc_detail,d.ofc_serial&&'Serial '+d.ofc_serial].filter(Boolean).join(', '));add('Supervisor',[supName(d),d.sup_serial&&'Serial '+d.sup_serial].filter(Boolean).join(', '));add('Records unit',d.records);
+  L.push('','NARRATIVE',d.narrative||'');
+  if(d.photos&&d.photos.length)L.push('',`PHOTOS: ${d.photos.length} attached (included in the downloaded report)`);
+  return L.join('\n');
+}
+
+let dl=null;
+const dlReady=(async()=>{try{if(window.claude&&claude.use)dl=await claude.use('downloads');}catch(e){dl=null;}})();
+async function offer(filename,data){
+  await dlReady;
+  if(!dl){
+    try{const blob=data instanceof Blob?data:new Blob([data],{type:filename.endsWith('.pdf')?'application/pdf':filename.endsWith('.json')?'application/json':'text/html'});
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),60000);toast('Saved '+filename);return true;}
+    catch(e){toast('Couldn’t save the file — use “Copy as text”.');return false;}
+  }
+  try{await dl.save({filename,data});toast('Saved '+filename);return true;}
+  catch(e){ if(e&&e.code==='declined')return false; toast('Couldn’t save the file'+(e&&e.message?': '+e.message:''));}
+}
+const base=()=>{const d=collect();return 'Injury_Report_'+((d.pr_no||'draft').replace(/[^\w-]+/g,'_'));};
+/* ---------- PDF export ---------- */
+const PW=816, PH=1056, PSCALE=2; // letter at 96 css px/in, rendered at 2x
+function pageImageViaSVG(css,pageXml){
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${PW*PSCALE}" height="${PH*PSCALE}" viewBox="0 0 ${PW} ${PH}"><foreignObject x="0" y="0" width="${PW}" height="${PH}"><div xmlns="http://www.w3.org/1999/xhtml" class="pdfroot"><style>${css}</style>${pageXml}</div></foreignObject></svg>`;
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{try{const c=document.createElement('canvas');c.width=PW*PSCALE;c.height=PH*PSCALE;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.9));}catch(e){rej(e);}};
+    img.onerror=()=>rej(new Error('render failed'));
+    img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+  });
+}
+let h2cP=null;
+function loadH2C(){
+  if(window.html2canvas)return Promise.resolve(window.html2canvas);
+  return h2cP||(h2cP=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';sc.onload=()=>res(window.html2canvas);sc.onerror=()=>{h2cP=null;rej(new Error('PDF helper could not load'));};document.head.appendChild(sc);}));
+}
+async function pagesViaH2C(css,pagesHtml){
+  const h2c=await loadH2C();
+  const host=document.createElement('div');host.style.cssText='position:fixed;left:-10000px;top:0;width:'+PW+'px';
+  host.innerHTML=`<style>${css.replace(/(^|\})\s*([^{}@]+)\{/g,(m,b,sel)=>b+sel.split(',').map(x=>'.pdfhost '+x.trim()).join(',')+'{')}</style>`+pagesHtml.map(p=>`<div class="pdfhost">${p}</div>`).join('');
+  document.body.appendChild(host);
+  try{const out=[];for(const el of host.querySelectorAll('.pdfhost .pdfpage')){const c=await h2c(el,{scale:PSCALE,backgroundColor:'#fff',width:PW,height:PH,logging:false});out.push(c.toDataURL('image/jpeg',0.9));}return out;}
+  finally{host.remove();}
+}
+function b64ToBytes(b64){const bin=atob(b64);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u;}
+function buildPDF(jpegs,title){
+  // minimal PDF: one full-page JPEG per page, US Letter
+  const enc=new TextEncoder(), parts=[], offs=[]; let len=0;
+  const push=x=>{const b=typeof x==='string'?enc.encode(x):x;parts.push(b);len+=b.length;};
+  const obj=(n,body)=>{offs[n]=len;push(`${n} 0 obj\n`);body();push('\nendobj\n');};
+  push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  const n=jpegs.length, kids=[];
+  for(let i=0;i<n;i++)kids.push(`${3+i*3} 0 R`);
+  const infoN=3+n*3;
+  obj(1,()=>push('<< /Type /Catalog /Pages 2 0 R >>'));
+  obj(2,()=>push(`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${n} >>`));
+  jpegs.forEach((j,i)=>{
+    const p=3+i*3, cs=p+1, im=p+2, bytes=b64ToBytes(j.split(',')[1]);
+    const content=`q 612 0 0 792 0 0 cm /Im0 Do Q`;
+    obj(p,()=>push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /XObject << /Im0 ${im} 0 R >> >> /Contents ${cs} 0 R >>`));
+    obj(cs,()=>{push(`<< /Length ${content.length} >>\nstream\n`);push(content);push('\nendstream');});
+    obj(im,()=>{push(`<< /Type /XObject /Subtype /Image /Width ${PW*PSCALE} /Height ${PH*PSCALE} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bytes.length} >>\nstream\n`);push(bytes);push('\nendstream');});
+  });
+  const t=String(title||'Injury Report').replace(/[()\\]/g,'').replace(/[^\x20-\x7e]/g,'-');
+  obj(infoN,()=>push(`<< /Title (${t}) /Producer (Injury Report app) >>`));
+  const xref=len; let x=`xref\n0 ${infoN+1}\n0000000000 65535 f \n`;
+  for(let i=1;i<=infoN;i++)x+=String(offs[i]).padStart(10,'0')+' 00000 n \n';
+  push(x+`trailer\n<< /Size ${infoN+1} /Root 1 0 R /Info ${infoN} 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  return new Blob(parts,{type:'application/pdf'});
+}
+function splitNarrative(text){
+  text=text||'';
+  const m=document.createElement('div');
+  m.style.cssText='position:fixed;left:-10000px;top:0;visibility:hidden;width:711px;font:11.5px/1.6 Arial,Helvetica,sans-serif;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:break-word';
+  document.body.appendChild(m);
+  const LIMIT=768; // usable height of the narrative box on one page
+  const fits=t=>{m.textContent=t;return m.scrollHeight<=LIMIT;};
+  const chunks=[];
+  try{
+    let rest=text;
+    while(rest.length&&!fits(rest)){
+      const toks=rest.split(/(\s+)/); let lo=1,hi=toks.length,best=1;
+      while(lo<=hi){const mid=(lo+hi)>>1;if(fits(toks.slice(0,mid).join(''))){best=mid;lo=mid+1;}else hi=mid-1;}
+      let piece=toks.slice(0,best).join('');
+      if(!piece.trim()){ // single huge token: hard split by characters
+        let a=1,b=rest.length,k=1;while(a<=b){const md=(a+b)>>1;if(fits(rest.slice(0,md))){k=md;a=md+1;}else b=md-1;}
+        piece=rest.slice(0,k);
+      }
+      chunks.push(piece.replace(/\s+$/,''));rest=rest.slice(piece.length).replace(/^\s+/,'');
+    }
+    chunks.push(rest);
+  }finally{m.remove();}
+  return chunks;
+}
+async function reportPDF(d){
+  const doc=new DOMParser().parseFromString(reportHTML(d,splitNarrative(d.narrative)),'text/html');
+  let css=[...doc.querySelectorAll('style')].map(s=>s.textContent).join('\n').replace(/@page[^}]*\}/g,'').replace(/@media screen\{[^{}]*(\{[^{}]*\}[^{}]*)*\}/g,'');
+  css+=`\n.pdfroot{width:${PW}px;height:${PH}px;background:#fff;font:11px/1.25 Arial,Helvetica,sans-serif;color:#000}
+.pdfpage{width:${PW}px;height:${PH}px;box-sizing:border-box;padding:.45in;background:#fff;overflow:hidden}
+.pdfpage .page{max-width:none;margin:0;padding:0;box-shadow:none;page-break-before:auto}`;
+  const ser=new XMLSerializer();
+  const pages=[...doc.querySelectorAll('.page')];
+  const xml=pages.map(p=>`<div class="pdfpage" xmlns="http://www.w3.org/1999/xhtml">${ser.serializeToString(p)}</div>`);
+  let imgs=[];
+  try{for(const x of xml)imgs.push(await pageImageViaSVG(css,x));}
+  catch(e){imgs=await pagesViaH2C(css,pages.map(p=>`<div class="pdfpage">${p.outerHTML}</div>`));}
+  return buildPDF(imgs,'Injury Report '+(d.pr_no||''));
+}
+
+
+let busy=false, lastPdf=null;
+async function doReport(){
+  if(busy)return false;
+  const d=collect();
+  // flag a few key blanks, but don't block
+  const key=['pr_no','v_name','date_occ','time_occ','loc_addr','ofc'];
+  const missing=key.filter(k=>!d[k]);
+  form.querySelectorAll('.miss').forEach(e=>e.classList.remove('miss'));
+  missing.forEach(k=>$(k)&&$(k).classList.add('miss'));
+  busy=true; lastPdf=null; toast('Creating PDF…');
+  let ok=false, ext='pdf';
+  try{const pdf=await reportPDF(d); lastPdf=pdf; ok=await offer(base()+'.pdf',pdf);}
+  catch(e){console.warn(e); ext='html'; toast('PDF couldn’t be created here — saving the report as a web page instead.'); ok=await offer(base()+'.html',reportHTML(d));}
+  finally{busy=false;}
+  if(missing.length)setTimeout(()=>toast('Heads up: some key fields are blank (highlighted).'),2700);
+  return ok?ext:false;
+}
+/* ---------- submit to supervisor (Outlook) ---------- */
+function emailBody(d){
+  const who=supName(d);
+  const opt=null, title='';
+  const rank=/Sergeant/.test(title)?'Sgt. ':/Lieutenant/.test(title)?'Lt. ':'';
+  const lastN=d.sup!=='OTHER'&&who?who.split(',')[0].toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()):'';
+  const L=[lastN?`${rank||(title?'':'')}${rank?lastN:who.split(',').slice(1).join(' ').trim().split(' ')[0].toLowerCase().replace(/^\w/,c=>c.toUpperCase())},`:'Hello,','',
+   `An Injury Report has been completed and is attached for your review.`,'',
+   `PR No.: ${d.pr_no||'—'}`,
+   `Classification: ${d.classification==='OTHER'?(d.classification_other||'OTHER'):(d.classification||'—')}`,
+   `Date/Time occurred: ${fd(d.date_occ)||'—'} ${ft(d.time_occ)}`.trim(),
+   `Location: ${[d.loc_addr,d.loc_area].filter(Boolean).join(' – ')||'—'}`,
+   `Reporting officer: ${[ofcName(d),d.ofc_serial&&'#'+d.ofc_serial].filter(Boolean).join(' ')||'—'}`,
+   (d.photos&&d.photos.length)?`Photos: ${d.photos.length} (in report)`:'',
+   '','Full report attached: '+base()+'.pdf','','Thank you.'];
+  return L.filter((x,i)=>x!==''||L[i-1]!=='').join('\n');
+}
+function closeSub(){$('subModal').classList.remove('show');}
+$('subClose').onclick=closeSub;
+$('btnSubmit').onclick=async()=>{
+  const d=collect();
+  if(!d.sup||(d.sup==='OTHER'&&!d.sup_other)){$('sup').classList.add('miss');$('sup').scrollIntoView({block:'center'});toast('Enter the supervisor’s name first');return;}
+  const saved=await doReport();
+  const subject=`Injury Report – PR ${d.pr_no||'(no PR #)'}${d.date_occ?' – '+fd(d.date_occ):''}`;
+  const body=emailBody(d);
+  const owa='https://outlook.office.com/mail/deeplink/compose?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  const mailto='mailto:?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  $('subBody').innerHTML=`<ol class="steps-list">
+    <li>${saved?'Report downloaded: <b>'+esc(base())+'.'+saved+'</b>':'Download the report first — use <b>Download report</b> (it wasn’t saved).'}</li>
+    <li>Open a pre-filled email<br>
+      <a class="outlook-btn" target="_blank" rel="noopener" href="${esc(owa)}">Open in Outlook</a>
+      <a class="hint" style="margin-left:10px" href="${esc(mailto)}">or the Outlook desktop app</a></li>
+    <li>In the <b>To</b> line, add <b>${esc(supName(d))}</b>, attach the downloaded <b>PDF</b>, and press <b>Send</b>.</li></ol>
+    <div id="shareBox" hidden style="margin:-2px 0 10px;padding:10px;background:var(--soft);border-radius:8px">
+      <b>Faster on phones/tablets:</b> share the PDF straight to Outlook — it arrives already attached.<br>
+      <button type="button" class="btn-solid" id="btnShare" style="margin-top:8px">Share PDF to Outlook…</button></div>
+    <div class="hint">Subject: ${esc(subject)}</div>
+    <div style="margin-top:8px"><button type="button" class="btn-ghost" id="subCopy">Copy email text</button></div>`;
+  const file=lastPdf?new File([lastPdf],base()+'.pdf',{type:'application/pdf'}):null;
+  if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
+    $('shareBox').hidden=false;
+    $('btnShare').onclick=async()=>{try{await navigator.share({files:[file],title:subject,text:body});}catch(e){if(e&&e.name!=='AbortError')toast('Sharing didn’t work — use Open in Outlook instead.');}};
+  }
+  $('subCopy').onclick=async()=>{try{await navigator.clipboard.writeText(`To: ${supName(d)}\nSubject: ${subject}\n\n${body}`);toast('Email text copied');}catch(e){toast('Copy was blocked');}};
+  $('subModal').classList.add('show');
+};
+$('btnReport').onclick=doReport; $('btnReport2').onclick=doReport;
+$('btnSaveJson').onclick=()=>offer(base()+'.json',JSON.stringify(collect(),null,2));
+$('btnCopy').onclick=async()=>{try{await navigator.clipboard.writeText(reportText(collect()));toast('Report copied to clipboard');}catch(e){toast('Copy was blocked by the browser');}};
+$('btnLoad').onclick=()=>$('fileIn').click();
+$('fileIn').onchange=e=>{
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();r.onload=()=>{try{apply(JSON.parse(r.result));save();toast('Loaded '+file.name);}catch(err){toast('That file isn’t a saved report');}};r.readAsText(file);e.target.value='';
+};
+form.addEventListener('input',e=>e.target.classList&&e.target.classList.remove('miss'));
+
+$('btnClear').onclick=()=>{$('mTitle').textContent='Start a new report?';$('mText').textContent='This clears every field except your officer name, detail and serial no. Save the form data first if you need this one.';$('modal').classList.add('show');};
+$('mNo').onclick=()=>$('modal').classList.remove('show');
+$('mYes').onclick=()=>{$('modal').classList.remove('show');const k=collect();form.reset();apply({photos:[],ofc:k.ofc,ofc_other:k.ofc_other,ofc_detail:k.ofc_detail,ofc_serial:k.ofc_serial});try{localStorage.removeItem(KEY);}catch(e){} $('status').textContent='New report';window.scrollTo(0,0);};
+
+/* ---------- ID barcode scan (AAMVA PDF417) ---------- */
+const ZX_URLS=['https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js','https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js'];
+let zxP=null;
+function loadZX(){
+  if(window.ZXing)return Promise.resolve(window.ZXing);
+  if(zxP)return zxP;
+  zxP=(async()=>{for(const u of ZX_URLS){try{await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=u;sc.onload=res;sc.onerror=rej;document.head.appendChild(sc);});if(window.ZXing)return window.ZXing;}catch(e){}}
+    zxP=null;throw new Error('Barcode reader could not load (check the internet connection).');})();
+  return zxP;
+}
+function loadImg(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file);const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('Could not open that image.'));i.src=u;});}
+function drawTo(img,maxSide,rot){
+  const s=Math.min(1,maxSide/Math.max(img.naturalWidth,img.naturalHeight));
+  const w=Math.round(img.naturalWidth*s),h=Math.round(img.naturalHeight*s);
+  const c=document.createElement('canvas');const r=rot%180!==0;c.width=r?h:w;c.height=r?w:h;
+  const g=c.getContext('2d',{willReadFrequently:true});g.translate(c.width/2,c.height/2);g.rotate(rot*Math.PI/180);g.drawImage(img,-w/2,-h/2,w,h);return c;
+}
+async function decodeID(file){
+  const img=await loadImg(file);
+  // 1) Native detector where the browser has one (Android Chrome, macOS)
+  if('BarcodeDetector' in window){
+    try{const fm=await BarcodeDetector.getSupportedFormats();
+      if(fm.includes('pdf417')){const det=new BarcodeDetector({formats:['pdf417']});
+        for(const rot of [0,90]){const r=await det.detect(drawTo(img,2400,rot));if(r.length&&r[0].rawValue)return r[0].rawValue;}}}catch(e){}
+  }
+  // 2) ZXing in JavaScript
+  const ZX=await loadZX();
+  const hints=new Map();hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS,[ZX.BarcodeFormat.PDF_417]);hints.set(ZX.DecodeHintType.TRY_HARDER,true);
+  const reader=new ZX.MultiFormatReader();reader.setHints(hints);
+  for(const size of [2000,1500,1100,2600]){
+    for(const rot of [0,90,180,270]){
+      const c=drawTo(img,size,rot);const px=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+      const lum=new Uint8ClampedArray(c.width*c.height);
+      for(let i=0,j=0;i<px.length;i+=4,j++)lum[j]=(px[i]*306+px[i+1]*601+px[i+2]*117)>>10;
+      for(const Bin of [ZX.HybridBinarizer,ZX.GlobalHistogramBinarizer]){
+        try{const bmp=new ZX.BinaryBitmap(new Bin(new ZX.RGBLuminanceSource(lum,c.width,c.height)));const r=reader.decode(bmp);if(r&&r.getText())return r.getText();}catch(e){}
+      }
+      await new Promise(r=>setTimeout(r,0));
+    }
+  }
+  return null;
+}
+function parseAAMVA(raw){
+  if(!raw||!/D(AQ|CS|AC|BB)/.test(raw))return null;
+  const f={};
+  raw.split(/[\n\r\x1e\x1d]+/).forEach(line=>{
+    const m=line.match(/^\s*(D[A-Z]{2})(.*)$/)||line.match(/D[LI](D[A-Z]{2})(.*)$/)||line.match(/.*(DAQ|DCS|DAA|DCT|DAC)(.*)$/);
+    if(m&&!(m[1] in f))f[m[1]]=m[2].trim();
+  });
+  const cap=v=>(v||'').replace(/\s+/g,' ').trim().toUpperCase();
+  let last=f.DCS||f.DAB, first=f.DAC||f.DCT, mid=f.DAD;
+  if(!last&&f.DAA){const p=f.DAA.split(/[,$]/);last=p[0];first=p[1];mid=p[2];}
+  if(first&&!mid&&f.DCT&&/[ ,]/.test(first.trim())){const p=first.trim().split(/[ ,]+/);first=p.shift();mid=p.join(' ');}
+  if(mid&&/^NONE$/i.test(mid.trim()))mid='';
+  const name=[cap(last),[cap(first),cap(mid)].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  let dob='';const b=(f.DBB||'').replace(/\D/g,'');
+  if(b.length===8){let y,mo,d;const y1=+b.slice(0,4);
+    if(y1>1900&&y1<2100&&+b.slice(4,6)<=12){y=b.slice(0,4);mo=b.slice(4,6);d=b.slice(6,8);}else{mo=b.slice(0,2);d=b.slice(2,4);y=b.slice(4,8);}
+    if(+mo>=1&&+mo<=12&&+d>=1&&+d<=31)dob=`${y}-${mo}-${d}`;}
+  const sx=(f.DBC||'').trim().toUpperCase();const sex=sx==='1'||sx==='M'?'M':sx==='2'||sx==='F'?'F':sx==='9'||sx==='X'?'X':'';
+  let height='';const hu=(f.DAU||'').toUpperCase();const hn=parseInt(hu.replace(/[^\d]/g,''),10);
+  if(hn){ if(/CM/.test(hu)){const inch=Math.round(hn/2.54);height=`${Math.floor(inch/12)}'${inch%12}"`;}
+    else if(/^\s*\d-\d{2}/.test(hu)){const [ft,i]=hu.match(/(\d)-(\d{2})/).slice(1);height=`${ft}'${+i}"`;}
+    else height=`${Math.floor(hn/12)}'${hn%12}"`; }
+  let weight='';if(f.DAW&&parseInt(f.DAW,10))weight=parseInt(f.DAW,10)+' lbs';else if(f.DAX&&parseInt(f.DAX,10))weight=Math.round(parseInt(f.DAX,10)*2.2046)+' lbs';
+  const EYES={BLK:'BLACK',BLU:'BLUE',BRO:'BROWN',GRY:'GRAY',GRN:'GREEN',HAZ:'HAZEL',MAR:'MAROON',PNK:'PINK',DIC:'DICHROMATIC',UNK:''};
+  const HAIR={BAL:'BALD',BLK:'BLACK',BLN:'BLOND',BRO:'BROWN',GRY:'GRAY',RED:'RED',SDY:'SANDY',WHI:'WHITE',UNK:''};
+  const eyes=f.DAY?(EYES[cap(f.DAY)]??cap(f.DAY)):'', hair=f.DAZ?(HAIR[cap(f.DAZ)]??cap(f.DAZ)):'';
+  const addr=[cap(f.DAG),cap(f.DAH)].filter(Boolean).join(', ');
+  let zip=(f.DAK||'').replace(/[^\dA-Z]/gi,'');if(/^\d{9}$/.test(zip))zip=/0000$/.test(zip)?zip.slice(0,5):zip.slice(0,5)+'-'+zip.slice(5);else if(/^\d{5,}/.test(zip))zip=zip.slice(0,5);
+  return {v_name:name,v_sex:sex,v_dob:dob,v_height:height,v_weight:weight,v_eyes:eyes,v_hair:hair,v_address:addr,v_city:cap(f.DAI),v_statecounty:cap(f.DAJ),v_zip:zip,v_dl:cap(f.DAQ),v_dl_state:cap(f.DAJ)};
+}
+const SCAN_LABELS={v_name:'Name',v_sex:'Sex',v_dob:'DOB',v_height:'Height',v_weight:'Weight',v_eyes:'Eyes',v_hair:'Hair',v_address:'Address',v_city:'City',v_statecounty:'State',v_zip:'ZIP',v_dl:'License no.',v_dl_state:'License state'};
+function showScan(html){const el=$('scanResult');el.innerHTML=html;el.hidden=false;}
+async function handleID(file){
+  if(!file)return;
+  showScan('<div>Reading barcode… this can take a few seconds.</div>');
+  let raw=null;
+  try{raw=await decodeID(file);}catch(e){showScan(`<div class="err">${esc(e.message)}</div>`);return;}
+  const data=raw&&parseAAMVA(raw);
+  if(!data){showScan(`<div class="err">${raw?'That barcode isn’t a driver’s license / ID barcode.':'Couldn’t find the barcode in that photo.'}</div>
+    <div class="hint" style="margin-top:4px">Try again: flip to the back of the card, get closer so the wide barcode fills most of the photo, keep it flat and in focus, and avoid glare.</div>
+    <div class="row" style="margin-top:8px"><button type="button" class="btn-ghost" id="scanClose">Close</button></div>`);
+    $('scanClose').onclick=()=>$('scanResult').hidden=true;return;}
+  const rows=Object.keys(SCAN_LABELS).filter(k=>data[k]).map(k=>`<tr><td>${SCAN_LABELS[k]}</td><td>${esc(k==='v_dob'?fd(data[k]):data[k])}</td></tr>`).join('');
+  showScan(`<b>Read from ID — check before filling</b><table>${rows}</table>
+    <div class="row"><button type="button" class="btn-ghost" id="scanClose">Discard</button><button type="button" class="btn-solid" id="scanFill">Fill victim fields</button></div>`);
+  $('scanClose').onclick=()=>$('scanResult').hidden=true;
+  $('scanFill').onclick=()=>{
+    Object.entries(data).forEach(([k,v])=>{if(v&&$(k))$(k).value=v;});
+    calcAge();save();$('scanResult').hidden=true;toast('Victim fields filled from ID');
+  };
+}
+['idCam','idPic'].forEach(id=>$(id).addEventListener('change',e=>{e.stopPropagation();const f=e.target.files[0];e.target.value='';handleID(f);}));
+
+/* ---------- dictation ---------- */
+function webSpeechDict(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition; if(!SR)return null;
+  let rec=null,state='idle',stopping=false,err=null,hp=()=>{},hf=()=>{},hs=()=>{};
+  const set=(st,reason)=>{state=st;hs(reason?{state:st,reason}:{state:st});};
+  const make=(res,rej)=>{
+    rec=new SR();rec.continuous=true;rec.interimResults=true;rec.lang=navigator.language||'en-US';
+    rec.onstart=()=>{if(state!=='listening'){set('listening');res&&res();}};
+    rec.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal){const t=r[0].transcript.trim();if(t)hf({text:' '+t});}else interim+=r[0].transcript;}hp({text:interim});};
+    rec.onerror=e=>{if(e.error==='no-speech'||e.error==='aborted')return;err=(e.error==='not-allowed'||e.error==='service-not-allowed')?'not_granted':'upstream_error';if(state==='starting'&&rej)rej({code:err,message:e.error});};
+    rec.onend=()=>{
+      if(!stopping&&!err&&state==='listening'){try{make();rec.start();return;}catch(_){}} // keep listening after pauses
+      hp({text:''});const r=err||(stopping?'stopped':'viewer_stopped');err=null;stopping=false;set('idle',r);
+    };
+  };
+  return {
+    start(){if(state!=='idle')return Promise.resolve();return new Promise((res,rej)=>{set('starting');make(res,rej);try{rec.start();}catch(x){set('idle','upstream_error');rej({code:'upstream_error',message:String(x)});}});},
+    stop(){if(!rec||state==='idle')return Promise.resolve();stopping=true;set('finishing');return new Promise(r=>{const end=rec.onend;rec.onend=ev=>{end(ev);r();};try{rec.stop();}catch(_){end();r();}});},
+    active:()=>state!=='idle',
+    onPartial:f=>{hp=f;return()=>{hp=()=>{}}},onFinal:f=>{hf=f;return()=>{hf=()=>{}}},onState:f=>{hs=f;return()=>{hs=()=>{}}}
+  };
+}
+let dict=null, insAt=null;
+const ta=$('narrative'), micBtn=$('btnMic');
+function micUI(state){
+  micBtn.classList.toggle('on',state==='listening');
+  micBtn.classList.toggle('busy',state==='starting'||state==='finishing');
+  $('micLabel').textContent=state==='listening'?'Stop dictating':state==='starting'?'Starting…':state==='finishing'?'Finishing…':'Dictate narrative';
+}
+function insertText(txt){
+  const v=ta.value; let at=insAt==null?v.length:Math.min(insAt,v.length);
+  const before=v.slice(0,at);
+  if(!before||/\s$/.test(before))txt=txt.replace(/^\s+/,'');
+  else if(!/^\s/.test(txt))txt=' '+txt;
+  ta.value=before+txt+v.slice(at); insAt=at+txt.length;
+  ta.setSelectionRange(insAt,insAt); save();
+}
+(async()=>{
+  try{ if(window.claude&&claude.use)dict=await claude.use('dictation'); }catch(e){dict=null;}
+  if(!dict||typeof dict.start!=='function'||typeof dict.onFinal!=='function')dict=webSpeechDict();
+  if(!dict)return;
+  micBtn.hidden=false; $('micHint').textContent='Speak naturally; words are added where your cursor is.';
+  dict.onPartial(({text})=>{$('partial').hidden=!text;$('partial').textContent=text;});
+  dict.onFinal(({text})=>{if(text)insertText(text);});
+  dict.onState(({state,reason})=>{
+    micUI(state);
+    if(state==='idle'){$('partial').hidden=true;
+      if(reason==='unavailable'){micBtn.hidden=true;toast('Dictation isn’t available here — type or use your keyboard’s mic.');}
+      else if(reason==='not_granted')toast('Microphone access was not allowed.');
+      else if(reason==='rate_limited')toast('Dictation is busy — try again in a moment.');
+      else if(reason==='upstream_error')toast('Dictation stopped because of a microphone or service error.');
+      else if(reason==='time_limit')toast('Dictation stops after 60 minutes — tap to continue.');
+    }
+  });
+})();
+micBtn.addEventListener('click',()=>{
+  if(!dict)return;
+  if(dict.active()){dict.stop().catch(()=>{});return;}
+  insAt=(document.activeElement===ta||ta.selectionStart!==ta.selectionEnd||ta.selectionStart>0)?ta.selectionEnd:ta.value.length;
+  dict.start().catch(e=>{
+    const c=e&&e.code;
+    if(c==='not_granted')toast('Microphone access was not allowed — you can still type.');
+    else if(c==='unavailable'){micBtn.hidden=true;toast('Dictation isn’t available here.');}
+    else if(c==='dismissed'||c==='stopped'){}
+    else toast('Couldn’t start dictation'+(e&&e.message?': '+e.message:''));
+  });
+});
+
+let init={};try{init=JSON.parse(localStorage.getItem(KEY)||'{}');if(Object.keys(init).length)$('status').textContent='Draft restored';}catch(e){}
+apply(init);
+idbGet('photos').then(v=>{if(Array.isArray(v)&&v.length){photos=v;renderPhotos();}});
+})();
+</script>
+</body>
+</html>
