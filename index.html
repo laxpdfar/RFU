@@ -81,6 +81,7 @@ textarea{resize:vertical;min-height:80px}
 .scan-result .err{color:var(--warn);font-weight:600}
 .btn-solid{background:var(--accent);color:#fff}
 .btn-solid:hover{background:var(--accent-2)}
+.dict-help.tip{border-color:#b9cbe4;background:var(--soft);color:var(--ink)}
 .dict-help{margin-top:8px;padding:10px 12px;border:1px solid #f0c48a;background:#fff8ee;border-radius:8px;font-size:14px;color:#5a3a10}
 .partial{margin-top:6px;padding:6px 10px;border-left:3px solid var(--accent-2);background:var(--soft);color:var(--muted);font-style:italic;font-size:14px}
 .photo-actions{display:flex;gap:8px;flex-wrap:wrap}
@@ -318,9 +319,9 @@ textarea{resize:vertical;min-height:80px}
     <button type="button" class="mic" id="btnMic" hidden><span class="dot"></span><span id="micLabel">Dictate narrative</span></button>
     <span class="hint" id="micHint">Tip: on a phone, tap the microphone key on your keyboard to dictate.</span>
   </div>
+  <div class="dict-help" id="dictHelp" hidden style="margin:0 0 10px"></div>
   <textarea class="narr" id="narrative" name="narrative" placeholder="Describe the incident. Cover each item checked in section 08."></textarea>
   <div class="partial" id="partial" hidden></div>
-  <div class="dict-help" id="dictHelp" hidden></div>
   <div class="count" id="narrCount">0 words</div>
 </section>
 
@@ -966,7 +967,8 @@ function insertText(txt){
 }
 (async()=>{
   try{ if(window.claude&&claude.use)dict=await claude.use('dictation'); }catch(e){dict=null;}
-  if(!dict||typeof dict.start!=='function'||typeof dict.onFinal!=='function')dict=webSpeechDict();
+  if(!dict||typeof dict.start!=='function'||typeof dict.onFinal!=='function')dict=IS_IOS?null:webSpeechDict();
+  if(IS_IOS){micBtn.hidden=false;$('micHint').textContent='Opens the keyboard — then tap its 🎤 key and speak.';return;}
   if(!dict)return;
   micBtn.hidden=false; $('micHint').textContent=IS_IOS?'Speak naturally. If it doesn’t start on iPhone, use the keyboard’s 🎤 key.':'Speak naturally; words are added where your cursor is.';
   dict.onPartial(({text})=>{$('partial').hidden=!text;$('partial').textContent=text;});
@@ -983,7 +985,15 @@ function insertText(txt){
     }
   });
 })();
+function iosKeyboardDictation(){
+  ta.focus();const n=ta.value.length;try{ta.setSelectionRange(n,n);}catch(_){}
+  const box=$('dictHelp');
+  box.innerHTML='<div style="display:flex;gap:10px;align-items:flex-start"><div style="font-size:26px;line-height:1">🎤</div><div><b>Tap the microphone key on the keyboard</b> (bottom-right, next to the space bar or below the keyboard) and start talking. Your words go straight into the narrative.<br><span style="font-size:13px">Tap the 🎤 again or tap the text when you’re done. No 🎤 key? Turn on <b>Settings → General → Keyboard → Enable Dictation</b>.</span></div></div><div style="margin-top:8px"><button type="button" class="btn-ghost" id="dictHelpClose">Got it</button></div>';
+  box.classList.add('tip');box.hidden=false;
+  $('dictHelpClose').onclick=()=>{box.hidden=true;box.classList.remove('tip');};
+}
 micBtn.addEventListener('click',()=>{
+  if(IS_IOS){iosKeyboardDictation();return;}
   if(!dict)return;
   if(dict.active()){dict.stop().catch(()=>{});return;}
   insAt=(document.activeElement===ta||ta.selectionStart!==ta.selectionEnd||ta.selectionStart>0)?ta.selectionEnd:ta.value.length;
