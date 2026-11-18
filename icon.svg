@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="0" fill="#ffffff"/>
+  <!-- form sheet -->
+  <path d="M112 56 H332 L408 132 V448 Q408 464 392 464 H112 Q96 464 96 448 V72 Q96 56 112 56 Z" fill="#f48fb1" stroke="#c2185b" stroke-width="10" stroke-linejoin="round"/>
+  <!-- folded corner -->
+  <path d="M332 56 V116 Q332 132 348 132 H408 Z" fill="#f8bbd0" stroke="#c2185b" stroke-width="10" stroke-linejoin="round"/>
+  <!-- form lines -->
+  <g stroke="#c2185b" stroke-width="12" stroke-linecap="round" opacity="0.55">
+    <line x1="140" y1="118" x2="290" y2="118"/>
+    <line x1="140" y1="370" x2="364" y2="370"/>
+    <line x1="140" y1="412" x2="300" y2="412"/>
+  </g>
+  <!-- checkbox -->
+  <rect x="140" y="152" width="34" height="34" rx="5" fill="none" stroke="#c2185b" stroke-width="8" opacity="0.7"/>
+  <path d="M147 170 L156 179 L169 160" fill="none" stroke="#111" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="190" y1="169" x2="300" y2="169" stroke="#c2185b" stroke-width="12" stroke-linecap="round" opacity="0.55"/>
+  <!-- RFU -->
+  <text x="252" y="318" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="124" letter-spacing="2" fill="#111111">RFU</text>
+</svg>
