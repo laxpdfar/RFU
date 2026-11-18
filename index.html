@@ -663,6 +663,24 @@ async function reportDocx(d){
   if(d.records)narr+=(narr?'\n\n':'')+'RECORDS UNIT: '+d.records;
   setText(118,narr);
 
+  // page 2 of the form is the end of the same table: split it off and force a page break
+  { let tr=fields[114]&&fields[114].begin;while(tr&&!(tr.namespaceURI===W_NS&&tr.localName==='tr'))tr=tr.parentNode;
+    const tbl=tr&&tr.parentNode;
+    if(tbl&&tbl.localName==='tbl'){
+      const t2=el('tbl');for(const c of [...tbl.children])if(c.localName==='tblPr'||c.localName==='tblGrid')t2.appendChild(c.cloneNode(true));
+      let r=tr;while(r){const nx=r.nextSibling;t2.appendChild(r);r=nx;}
+      const br=el('p'),pPr=el('pPr'),sp=el('spacing',{before:'0',after:'0',line:'20',lineRule:'exact'});pPr.appendChild(sp);
+      const rpr=el('rPr');rpr.appendChild(el('sz',{val:'2'}));pPr.appendChild(rpr);br.appendChild(pPr);
+      const run=el('r');const rr=el('rPr');rr.appendChild(el('sz',{val:'2'}));run.appendChild(rr);run.appendChild(el('br',{type:'page'}));br.appendChild(run);
+      tbl.parentNode.insertBefore(br,tbl.nextSibling);br.parentNode.insertBefore(t2,br.nextSibling);
+    }
+  }
+  // keep the closing empty paragraph tiny so it can't spill onto a blank extra page
+  { const body=doc.getElementsByTagNameNS(W_NS,'body')[0];const sect=kid(body,'sectPr');const last=sect&&sect.previousElementSibling;
+    if(last&&last.localName==='p'&&!last.textContent.trim()){let pPr=kid(last,'pPr');if(!pPr){pPr=el('pPr');last.insertBefore(pPr,last.firstChild);}
+      [...pPr.children].filter(c=>c.localName==='spacing'||c.localName==='rPr').forEach(c=>c.remove());
+      pPr.appendChild(el('spacing',{before:'0',after:'0',line:'20',lineRule:'exact'}));const rp=el('rPr');rp.appendChild(el('sz',{val:'2'}));pPr.appendChild(rp);}
+  }
   // photos: added after the narrative, two per page
   const pics=(d.photos||[]).filter(p=>p&&typeof p.src==='string'&&/^data:image\/jpe?g/.test(p.src));
   if(pics.length){
@@ -676,7 +694,7 @@ async function reportDocx(d){
       files.push({name:'word/'+fname,data:b64ToBytes(p.src.split(',')[1])});
       rels=rels.replace('</Relationships>',`<Relationship Id="${rid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="${fname}"/></Relationships>`);
       const [w,h]=await imgSize(p.src);let cx=MAXW,cy=Math.round(MAXW*h/w);if(cy>MAXH){cy=MAXH;cx=Math.round(MAXH*w/h);}
-      if(i%2===0)xml+=`<w:p><w:r><w:br w:type="page"/></w:r></w:p><w:p><w:pPr><w:spacing w:after="120"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/></w:rPr><w:t xml:space="preserve">PHOTOGRAPHS — PR NO. ${xmlEsc(d.pr_no||'')}${ofcName(d)?'   REPORTING OFFICER: '+xmlEsc(ofcName(d)):''}</w:t></w:r></w:p>`;
+      if(i%2===0)xml+=`<w:p><w:pPr><w:pageBreakBefore/><w:spacing w:after="120"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/></w:rPr><w:t xml:space="preserve">PHOTOGRAPHS — PR NO. ${xmlEsc(d.pr_no||'')}${ofcName(d)?'   REPORTING OFFICER: '+xmlEsc(ofcName(d)):''}</w:t></w:r></w:p>`;
       xml+=`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="120"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${9000+i}" name="Photo ${i+1}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="${9000+i}" name="photo${i+1}.jpeg"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
       xml+=`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="240"/></w:pPr><w:r><w:rPr><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">PHOTO ${i+1}${p.taken?' · '+xmlEsc(p.taken):''}${p.caption?' — '+xmlEsc(p.caption):''}</w:t></w:r></w:p>`;
     }
